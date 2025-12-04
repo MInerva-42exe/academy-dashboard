@@ -79,11 +79,11 @@ if check_password():
         st.markdown(f"*Data updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}*")
         st.markdown("---")
 
-        # Calculate KPIs (Fixed Definitions)
+        # Calculate KPIs
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         
-        # FIX: Ensure these counts are calculated before use
+        # Counts for Quality Tab
         biz_count = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
         gen_count = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
         blocked_count = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
@@ -117,10 +117,10 @@ if check_password():
                 fig_trend = go.Figure()
                 fig_trend.add_trace(go.Scatter(x=df_trend['Month'], y=df_trend['Enrollments'], 
                                              mode='lines+markers', name='Total Enrollments',
-                                             line=dict(color='#ff6600', width=3))) # ORANGE
+                                             line=dict(color='#ff6600', width=3))) 
                 fig_trend.add_trace(go.Scatter(x=df_trend['Month'], y=df_trend['Unique User Signups'], 
                                              mode='lines', name='Unique Users',
-                                             line=dict(color='#ffffff', dash='dot'))) # WHITE
+                                             line=dict(color='#ffffff', dash='dot'))) 
                 
                 fig_trend.update_layout(template="plotly_dark", height=450)
                 st.plotly_chart(fig_trend, use_container_width=True)
@@ -143,7 +143,7 @@ if check_password():
                 if data.get("Country") is not None:
                     top_10 = data["Country"].sort_values("Total Course Signups", ascending=False).head(10)
                     fig_bar = px.bar(top_10, x="Total Course Signups", y="Country", orientation='h')
-                    fig_bar.update_traces(marker_color='#ff6600') # ORANGE Bars
+                    fig_bar.update_traces(marker_color='#ff6600') 
                     fig_bar.update_layout(template="plotly_dark", yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -155,7 +155,7 @@ if check_password():
                 if data.get("Course") is not None:
                     df_course = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
                     fig_course = px.bar(df_course, x="Sign Ups", y="Course", orientation='h')
-                    fig_course.update_traces(marker_color='#ff6600') # ORANGE Bars
+                    fig_course.update_traces(marker_color='#ff6600') 
                     fig_course.update_layout(template="plotly_dark", yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_course, use_container_width=True)
             
@@ -169,24 +169,19 @@ if check_password():
                     fig_comp.update_layout(template="plotly_dark")
                     st.plotly_chart(fig_comp, use_container_width=True)
 
-        # TAB 4: QUALITY
+        # TAB 4: QUALITY (Modified: Removed Table)
         with tab_qual:
-            col_q1, col_q2 = st.columns(2)
-            with col_q1:
-                st.subheader("User Segmentation")
-                labels = ["Business", "Generic", "Blocked"]
-                values = [biz_count, gen_count, blocked_count]
-                # Custom colors: Orange, Grey, Dark Grey
-                colors = ['#ff6600', '#9e9e9e', '#424242'] 
-                
-                fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
-                fig_pie.update_layout(template="plotly_dark")
-                st.plotly_chart(fig_pie, use_container_width=True)
+            st.subheader("User Segmentation")
+            labels = ["Business", "Generic", "Blocked"]
+            values = [biz_count, gen_count, blocked_count]
+            colors = ['#ff6600', '#9e9e9e', '#424242'] 
             
-            with col_q2:
-                st.subheader("Business Accounts (Preview)")
-                if data.get("Business_Email") is not None:
-                    st.dataframe(data["Business_Email"][["Name", "Email", "Category"]].head(20), hide_index=True)
+            fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
+            fig_pie.update_layout(template="plotly_dark")
+            # Using columns to center/size the chart appropriately
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c2:
+                st.plotly_chart(fig_pie, use_container_width=True)
 
     else:
         st.warning("Please upload 'final_unified_master_with_segments.xlsx' to GitHub.")
