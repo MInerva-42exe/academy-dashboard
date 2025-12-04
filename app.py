@@ -81,7 +81,7 @@ if check_password():
     @st.cache_data
     def load_data():
         # UPDATED FILENAME TO MATCH YOUR LATEST UPLOAD
-        file_path = "unified_new_dataset_with_stats_and_segments_v2.xlsx"
+        file_path = "unified_new_dataset_with_stats_and_segments.xlsx"
         try:
             xls = pd.read_excel(file_path, sheet_name=None)
             data = {}
