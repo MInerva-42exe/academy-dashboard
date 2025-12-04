@@ -165,11 +165,12 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months to view data.")
 
-        # TAB 2: GEOGRAPHY (UPDATED TREEMAP)
+        # TAB 2: GEOGRAPHY (SINGLE TITLE)
         with tab_geo:
+            st.subheader("Users by Country")  # Single Unified Title
+            
             col_map, col_tree = st.columns([1, 1])
             with col_map:
-                st.subheader("Global Map")
                 if data.get("Country") is not None:
                     fig_map = px.choropleth(data["Country"], locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
@@ -178,7 +179,6 @@ if check_password():
                     st.plotly_chart(fig_map, use_container_width=True)
             
             with col_tree:
-                st.subheader("Regional Distribution (Treemap)")
                 if data.get("Country") is not None:
                     df_tree = data["Country"].sort_values("Total Course Signups", ascending=False).head(30)
                     
