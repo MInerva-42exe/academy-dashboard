@@ -6,10 +6,19 @@ import plotly.graph_objects as go
 # --- 1. PAGE CONFIGURATION & THEME ---
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# CSS: Black Background, Orange Highlights, and **EQUAL WIDTH TABS**
+# CSS: Import Google Fonts (Lato), Black Background, & Styling
 st.markdown("""
 <style>
-    /* Main Background - Pure Black */
+    /* --- FONTS --- */
+    /* Import Lato (The closest open-source match to Zoho Puvi) from Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
+
+    /* Force Lato on everything */
+    html, body, [class*="css"] {
+        font-family: 'Lato', sans-serif !important;
+    }
+
+    /* --- GLOBAL THEME --- */
     .stApp {
         background-color: #000000;
         color: #fafafa;
@@ -27,32 +36,25 @@ st.markdown("""
     }
 
     /* --- TAB STYLING (EQUAL WIDTH) --- */
-    /* Target the container of the tabs */
     .stTabs [data-baseweb="tab-list"] {
-        width: 100%; /* Full Width */
-        gap: 8px;    /* Gap between tabs */
+        width: 100%;
+        gap: 8px;
     }
-
-    /* Target the individual tabs */
     .stTabs [data-baseweb="tab"] {
-        flex-grow: 1;    /* Force equal expansion */
-        text-align: center; /* Center the text */
+        flex-grow: 1;
+        text-align: center;
         height: 50px;
-        background-color: rgba(255, 255, 255, 0.05); /* Subtle dark background for unselected */
+        background-color: rgba(255, 255, 255, 0.05);
         border-radius: 5px 5px 0 0;
         color: #9CA3AF;
         border: none;
         font-weight: 600;
     }
-
-    /* Selected Tab Style */
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(255, 102, 0, 0.15); /* Slight Orange Tint */
-        color: #ff6600; /* Orange Text */
-        border-bottom: 3px solid #ff6600; /* Orange Underline */
+        background-color: rgba(255, 102, 0, 0.15);
+        color: #ff6600;
+        border-bottom: 3px solid #ff6600;
     }
-    
-    /* Hover Effect */
     .stTabs [data-baseweb="tab"]:hover {
         background-color: rgba(255, 255, 255, 0.1);
         color: #ffffff;
@@ -215,7 +217,6 @@ if check_password():
             st.subheader("Users by Country")
             
             if data.get("Country") is not None:
-                # Filter Logic
                 all_regions = sorted(data["Country"]["Region"].unique().tolist())
                 filter_options_geo = ["All"] + all_regions
                 selected_regions = st.multiselect("Select Region:", options=filter_options_geo, default=["All"])
@@ -241,7 +242,7 @@ if check_password():
                     )
                     fig_tree.update_layout(
                         template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(t=0, l=0, r=0, b=0), height=450,
+                        margin=dict(t=10, l=10, r=10, b=10), height=450,
                         shapes=[dict(type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1, line=dict(color="#333", width=2))]
                     )
                     fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}', marker=dict(line=dict(color='#000000', width=1)))
