@@ -165,9 +165,9 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months to view data.")
 
-        # TAB 2: GEOGRAPHY (TREEMAP VERSION)
+        # TAB 2: GEOGRAPHY (UPDATED TREEMAP)
         with tab_geo:
-            col_map, col_tree = st.columns([1, 1]) # Equal width for balance
+            col_map, col_tree = st.columns([1, 1])
             with col_map:
                 st.subheader("Global Map")
                 if data.get("Country") is not None:
@@ -180,7 +180,6 @@ if check_password():
             with col_tree:
                 st.subheader("Regional Distribution (Treemap)")
                 if data.get("Country") is not None:
-                    # Take top 30 countries for a rich but readable treemap
                     df_tree = data["Country"].sort_values("Total Course Signups", ascending=False).head(30)
                     
                     fig_tree = px.treemap(
@@ -188,17 +187,28 @@ if check_password():
                         path=['Country'], 
                         values='Total Course Signups',
                         color='Total Course Signups',
-                        color_continuous_scale=[[0, "#444"], [1, "#ff6600"]] # Grey to Orange scale
+                        color_continuous_scale=[[0, "#444"], [1, "#ff6600"]]
                     )
                     
                     fig_tree.update_layout(
                         template="plotly_dark",
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(t=20, l=0, r=0, b=0),
-                        height=450
+                        paper_bgcolor='rgba(0,0,0,0)', # Transparent
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        margin=dict(t=0, l=0, r=0, b=0), # Tight fit
+                        height=450,
+                        # VISIBLE BORDER AROUND TREEMAP
+                        shapes=[dict(
+                            type="rect", 
+                            xref="paper", yref="paper",
+                            x0=0, y0=0, x1=1, y1=1,
+                            line=dict(color="#333", width=2)
+                        )]
                     )
-                    # Customize hover info
-                    fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}')
+                    # Clean black borders between blocks
+                    fig_tree.update_traces(
+                        hovertemplate='<b>%{label}</b><br>Signups: %{value}',
+                        marker=dict(line=dict(color='#000000', width=1)) 
+                    )
                     
                     st.plotly_chart(fig_tree, use_container_width=True)
 
