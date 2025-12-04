@@ -80,7 +80,8 @@ if check_password():
     # --- 3. DATA LOADING ---
     @st.cache_data
     def load_data():
-        file_path = "final_unified_master_with_segments.xlsx"
+        # UPDATED FILENAME TO MATCH YOUR LATEST UPLOAD
+        file_path = "unified_new_dataset_with_stats_and_segments_v2.xlsx"
         try:
             xls = pd.read_excel(file_path, sheet_name=None)
             data = {}
@@ -284,11 +285,20 @@ if check_password():
             with col_c1:
                 st.subheader("Popular Courses")
                 if data.get("Course") is not None:
-                    df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
+                    # --- INCREASED TO TOP 30 ---
+                    df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(30)
+                    
                     fig_course = px.bar(df_course_top, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
-                    fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
+                    fig_course.update_layout(
+                        template="plotly_dark", 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        yaxis={'categoryorder':'total ascending'},
+                        height=800 # Increased height for 30 bars
+                    )
                     st.plotly_chart(fig_course, use_container_width=True)
+                    
                     st.markdown("#### All Courses")
                     st.dataframe(data["Course"].sort_values("Sign Ups", ascending=False), use_container_width=True, hide_index=True)
             
