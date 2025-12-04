@@ -107,7 +107,7 @@ if check_password():
         # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
 
-        # TAB 1: GROWTH (Updated with Clean 'All' Filter)
+        # TAB 1: GROWTH (Updated Default Selection Logic)
         with tab_growth:
             st.subheader("Enrollment Trends")
             
@@ -131,19 +131,23 @@ if check_password():
                 # Add "All Months" to the options
                 filter_options = ["All Months"] + all_months
                 
-                # Default selection is JUST "All Months" to keep UI clean
+                # --- NEW LOGIC: Default to 2025+ ---
+                # Get list of months where year is >= 2025
+                default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
+                
+                # Safety check: If for some reason there is no 2025 data, fallback to "All Months"
+                current_default = default_months if default_months else ["All Months"]
+
                 selected_options = st.multiselect(
                     "Select Timeframe:",
                     options=filter_options,
-                    default=["All Months"]
+                    default=current_default
                 )
                 
                 # 3. Filter Application
-                # If "All Months" is selected (even if others are too), show everything
                 if "All Months" in selected_options:
                     df_filtered = df_trend
                 else:
-                    # Otherwise, filter by the specific months chosen
                     df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)]
                     df_filtered = df_filtered.sort_values("Month")
 
