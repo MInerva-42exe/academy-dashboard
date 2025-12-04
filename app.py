@@ -95,6 +95,9 @@ if check_password():
             data["Generic_Email"] = xls.get("Generic Emails")
             data["Blocked_Email"] = xls.get("Blocked Emails")
             data["Starter_vs_Non"] = xls.get("Starter_vs_NonStarter")
+            # --- NEW SHEETS ---
+            data["Badges"] = xls.get("Badges Issued")
+            data["Leads"] = xls.get("Leads Generated")
             
             # --- CONTINENT MAPPING LOGIC ---
             if data["Country"] is not None:
@@ -146,22 +149,23 @@ if check_password():
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         
+        # New KPIs
+        total_badges = data["Badges"]["Number of Badges"].sum() if data.get("Badges") is not None else 0
+        total_leads = data["Leads"]["Number of Leads Gen"].sum() if data.get("Leads") is not None else 0
+
+        # Counts for Pie Chart
         biz_count = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
         gen_count = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
         blocked_count = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
         
-        top_region = "N/A"
-        if data.get("Country") is not None:
-             top_region = data["Country"].sort_values("Total Course Signups", ascending=False).iloc[0]["Country"]
-
         kpi1, kpi2, kpi3, kpi4 = st.columns(4)
         kpi1.metric("Net User Enrollments", f"{total_enrolls:,}")
         kpi2.metric("Unique Users", f"{total_unique:,}")
-        kpi3.metric("Business Accounts", f"{biz_count:,}")
-        kpi4.metric("Top Region", top_region)
+        kpi3.metric("Badges Issued", f"{total_badges:,}")
+        kpi4.metric("Leads Generated", f"{total_leads:,}")
 
         # --- 5. TABS ---
-        tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
+        tab_growth, tab_geo, tab_content, tab_business = st.tabs(["Growth", "Geography", "Courses", "Business"])
 
         # TAB 1: GROWTH
         with tab_growth:
@@ -207,7 +211,7 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months.")
 
-        # TAB 2: GEOGRAPHY (LOCKED MAP)
+        # TAB 2: GEOGRAPHY
         with tab_geo:
             st.subheader("Users by Country")
             
@@ -224,7 +228,6 @@ if check_password():
 
                 col_map, col_tree = st.columns([1, 1])
                 with col_map:
-                    # --- LOCKED MAP CONFIGURATION ---
                     fig_map = px.choropleth(df_geo_filtered, locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
@@ -232,21 +235,12 @@ if check_password():
                     fig_map.update_layout(
                         template="plotly_dark", 
                         paper_bgcolor='rgba(0,0,0,0)', 
-                        geo=dict(
-                            bgcolor='rgba(0,0,0,0)',
-                            projection_type="natural earth", 
-                        ),
+                        geo=dict(bgcolor='rgba(0,0,0,0)', projection_type="natural earth"),
                         dragmode="pan", 
                         height=500,     
                         margin=dict(l=0, r=0, t=0, b=0)
                     )
-                    
-                    config = {
-                        'scrollZoom': True,       
-                        'displayModeBar': False,   
-                        'showTips': False
-                    }
-                    
+                    config = {'scrollZoom': True, 'displayModeBar': False, 'showTips': False}
                     st.plotly_chart(fig_map, use_container_width=True, config=config)
                 
                 with col_tree:
@@ -266,51 +260,82 @@ if check_password():
                 st.markdown("### Detailed Regional Data")
                 st.dataframe(df_geo_filtered.sort_values("Total Course Signups", ascending=False), use_container_width=True, hide_index=True)
 
-        # TAB 3: CONTENT (UPDATED WITH ALL VALUES TABLE)
+        # TAB 3: CONTENT
         with tab_content:
             col_c1, col_c2 = st.columns(2)
             with col_c1:
                 st.subheader("Popular Courses")
                 if data.get("Course") is not None:
-                    # Chart: Top 10
                     df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
                     fig_course = px.bar(df_course_top, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
                     fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_course, use_container_width=True)
                     
-                    # Table: All Values
                     st.markdown("#### All Courses")
-                    df_course_all = data["Course"].sort_values("Sign Ups", ascending=False)
-                    st.dataframe(df_course_all, use_container_width=True, hide_index=True)
+                    st.dataframe(data["Course"].sort_values("Sign Ups", ascending=False), use_container_width=True, hide_index=True)
             
             with col_c2:
+                # --- NEW: BADGES ISSUED CHART ---
+                st.subheader("Badges Issued")
+                if data.get("Badges") is not None:
+                    df_badges = data["Badges"].copy()
+                    df_badges["Month"] = pd.to_datetime(df_badges["Month"])
+                    df_badges = df_badges.sort_values("Month")
+                    
+                    fig_badges = px.line(df_badges, x="Month", y="Number of Badges", markers=True)
+                    fig_badges.update_traces(line_color='#ff6600', line_width=3)
+                    fig_badges.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
+                    st.plotly_chart(fig_badges, use_container_width=True)
+                    
+                    st.markdown("#### Badges Data")
+                    st.dataframe(df_badges, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Badges data not available in Excel.")
+
+                # Completion Rates (Moved down slightly or below if preferred, kept here for layout)
                 st.subheader("Completion Rates")
                 if data.get("Completion") is not None:
-                    # Chart: All (or filtered if preferred, but usually small list)
                     df_comp = data["Completion"].sort_values("Avg Completion %", ascending=True)
                     fig_comp = px.bar(df_comp, x="Avg Completion %", y="Starter Kit", orientation='h')
                     fig_comp.update_traces(marker=dict(color=df_comp["Avg Completion %"], colorscale=[[0, "#333"], [1, "#ff6600"]]))
                     fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig_comp, use_container_width=True)
                     
-                    # Table: All Values
-                    st.markdown("#### Detailed Completion Stats")
-                    # Display sorted high-to-low for table readability
+                    st.markdown("#### Completion Data")
                     st.dataframe(df_comp.sort_values("Avg Completion %", ascending=False), use_container_width=True, hide_index=True)
 
-        # TAB 4: QUALITY
-        with tab_qual:
-            st.subheader("User Segmentation")
-            labels = ["Business", "Generic", "Blocked"]
-            values = [biz_count, gen_count, blocked_count]
-            colors = ['#ff6600', '#9e9e9e', '#424242'] 
+        # TAB 4: BUSINESS (Renamed from Quality)
+        with tab_business:
+            col_b1, col_b2 = st.columns(2)
             
-            fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
-            fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            c1, c2, c3 = st.columns([1, 2, 1])
-            with c2:
+            with col_b1:
+                st.subheader("User Segmentation")
+                labels = ["Business", "Generic", "Blocked"]
+                values = [biz_count, gen_count, blocked_count]
+                colors = ['#ff6600', '#9e9e9e', '#424242'] 
+                
+                fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
+                fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_pie, use_container_width=True)
+            
+            with col_b2:
+                # --- NEW: LEADS GENERATED CHART ---
+                st.subheader("Leads Generated")
+                if data.get("Leads") is not None:
+                    df_leads = data["Leads"].copy()
+                    df_leads["Month"] = pd.to_datetime(df_leads["Month"])
+                    df_leads = df_leads.sort_values("Month")
+                    
+                    fig_leads = px.line(df_leads, x="Month", y="Number of Leads Gen", markers=True)
+                    fig_leads.update_traces(line_color='#ff6600', line_width=3)
+                    fig_leads.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
+                    st.plotly_chart(fig_leads, use_container_width=True)
+                    
+                    st.markdown("#### Leads Data")
+                    st.dataframe(df_leads, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Leads data not available in Excel.")
 
     else:
         st.warning("Please upload 'final_unified_master_with_segments.xlsx' to GitHub.")
