@@ -4,21 +4,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # --- 1. PAGE CONFIGURATION & THEME ---
-st.set_page_config(page_title="Analytics Dashboard", layout="wide", page_icon="📊")
+st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# Minimal CSS to force Black & Orange vibes
+# Minimal CSS to force Black Background & Orange Highlights
 st.markdown("""
 <style>
-    /* Main Background */
+    /* Main Background - Pure Black */
     .stApp {
-        background-color: #0e1117;
+        background-color: #000000;
         color: #fafafa;
     }
-    /* Metric/KPI Values */
+    /* Metric/KPI Values - Orange */
     div[data-testid="stMetricValue"] {
         color: #ff6600 !important;
     }
-    /* Tabs active line */
+    /* Tabs active line - Orange */
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         border-bottom-color: #ff6600 !important;
     }
@@ -75,7 +75,7 @@ if check_password():
 
     if data:
         # --- 4. DASHBOARD HEADER & KPIs ---
-        st.title("📊 Academy Analytics")
+        st.title("Academy Analytics")
         st.markdown(f"*Data updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}*")
         st.markdown("---")
 
@@ -99,8 +99,8 @@ if check_password():
         kpi3.metric("Business Accounts", f"{biz_count:,}")
         kpi4.metric("Top Region", top_region)
 
-        # --- 5. TABS ---
-        tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["📈 Growth", "🌍 Geography", "📚 Courses", "💎 Quality"])
+        # --- 5. TABS (No Emojis) ---
+        tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
 
         # TAB 1: GROWTH
         with tab_growth:
@@ -122,7 +122,7 @@ if check_password():
                                              mode='lines', name='Unique Users',
                                              line=dict(color='#ffffff', dash='dot'))) 
                 
-                fig_trend.update_layout(template="plotly_dark", height=450)
+                fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=450)
                 st.plotly_chart(fig_trend, use_container_width=True)
 
         # TAB 2: GEOGRAPHY
@@ -135,7 +135,7 @@ if check_password():
                     fig_map = px.choropleth(data["Country"], locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
-                    fig_map.update_layout(template="plotly_dark")
+                    fig_map.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', geo=dict(bgcolor='rgba(0,0,0,0)'))
                     st.plotly_chart(fig_map, use_container_width=True)
             
             with col_bar:
@@ -144,7 +144,7 @@ if check_password():
                     top_10 = data["Country"].sort_values("Total Course Signups", ascending=False).head(10)
                     fig_bar = px.bar(top_10, x="Total Course Signups", y="Country", orientation='h')
                     fig_bar.update_traces(marker_color='#ff6600') 
-                    fig_bar.update_layout(template="plotly_dark", yaxis={'categoryorder':'total ascending'})
+                    fig_bar.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_bar, use_container_width=True)
 
         # TAB 3: CONTENT
@@ -156,7 +156,7 @@ if check_password():
                     df_course = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
                     fig_course = px.bar(df_course, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
-                    fig_course.update_layout(template="plotly_dark", yaxis={'categoryorder':'total ascending'})
+                    fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_course, use_container_width=True)
             
             with col_c2:
@@ -166,10 +166,10 @@ if check_password():
                     fig_comp = px.bar(df_comp, x="Avg Completion %", y="Starter Kit", orientation='h')
                     # Orange scale for heatmap effect
                     fig_comp.update_traces(marker=dict(color=df_comp["Avg Completion %"], colorscale=[[0, "#333"], [1, "#ff6600"]]))
-                    fig_comp.update_layout(template="plotly_dark")
+                    fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig_comp, use_container_width=True)
 
-        # TAB 4: QUALITY (Modified: Removed Table)
+        # TAB 4: QUALITY
         with tab_qual:
             st.subheader("User Segmentation")
             labels = ["Business", "Generic", "Blocked"]
@@ -177,7 +177,7 @@ if check_password():
             colors = ['#ff6600', '#9e9e9e', '#424242'] 
             
             fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
-            fig_pie.update_layout(template="plotly_dark")
+            fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             # Using columns to center/size the chart appropriately
             c1, c2, c3 = st.columns([1, 2, 1])
             with c2:
