@@ -99,7 +99,7 @@ if check_password():
 
         # KPI Row
         kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-        kpi1.metric("Total Enrollments", f"{total_enrolls:,}")
+        kpi1.metric("Net User Enrollments", f"{total_enrolls:,}")
         kpi2.metric("Unique Users", f"{total_unique:,}")
         kpi3.metric("Business Accounts", f"{biz_count:,}")
         kpi4.metric("Top Region", top_region)
@@ -131,7 +131,7 @@ if check_password():
                 # Add "All Months" to the options
                 filter_options = ["All Months"] + all_months
                 
-                # --- NEW LOGIC: Default to 2025+ ---
+                # --- Default to 2025+ ---
                 # Get list of months where year is >= 2025
                 default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
                 
@@ -155,7 +155,7 @@ if check_password():
                 if not df_filtered.empty:
                     fig_trend = go.Figure()
                     fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Enrollments'], 
-                                                 mode='lines+markers', name='Total Enrollments',
+                                                 mode='lines+markers', name='Net User Enrollments',
                                                  line=dict(color='#ff6600', width=3))) 
                     fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Unique User Signups'], 
                                                  mode='lines', name='Unique Users',
@@ -173,7 +173,7 @@ if check_password():
                     # 5. Display Data Table
                     st.markdown("### Detailed Data")
                     display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups']].rename(
-                        columns={'Month_Label': 'Month'}
+                        columns={'Month_Label': 'Month', 'Enrollments': 'Net User Enrollments'}
                     )
                     st.dataframe(display_table, use_container_width=True, hide_index=True)
                 else:
