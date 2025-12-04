@@ -22,6 +22,11 @@ st.markdown("""
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         border-bottom-color: #ff6600 !important;
     }
+    /* Multiselect Tag Color */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #333333 !important;
+        color: #ffa500 !important; /* Orange text in tags */
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,31 +104,72 @@ if check_password():
         kpi3.metric("Business Accounts", f"{biz_count:,}")
         kpi4.metric("Top Region", top_region)
 
-        # --- 5. TABS (No Emojis) ---
+        # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
 
-        # TAB 1: GROWTH
+        # TAB 1: GROWTH (Updated with Filters)
         with tab_growth:
             st.subheader("Enrollment Trends")
+            
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
+                # 1. Prepare Data
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
-                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0).sort_values("Month")
+                # Merge into one clean table
+                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
+                df_trend = df_trend.sort_values("Month")
                 
-                # Chart: Dark background, Orange Line
-                fig_trend = go.Figure()
-                fig_trend.add_trace(go.Scatter(x=df_trend['Month'], y=df_trend['Enrollments'], 
-                                             mode='lines+markers', name='Total Enrollments',
-                                             line=dict(color='#ff6600', width=3))) 
-                fig_trend.add_trace(go.Scatter(x=df_trend['Month'], y=df_trend['Unique User Signups'], 
-                                             mode='lines', name='Unique Users',
-                                             line=dict(color='#ffffff', dash='dot'))) 
+                # Create a readable 'Month-Year' column for the dropdown (e.g., "Jan 2024")
+                df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
                 
-                fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=450)
-                st.plotly_chart(fig_trend, use_container_width=True)
+                # 2. Create Filter
+                # Get list of all available months
+                all_months = df_trend['Month_Label'].unique().tolist()
+                
+                # Multiselect Widget
+                selected_months = st.multiselect(
+                    "Select Timeframe:",
+                    options=all_months,
+                    default=all_months  # Default to showing everything
+                )
+                
+                # 3. Filter Data based on selection
+                # Filter the dataframe to only include rows where the label is in the selected list
+                df_filtered = df_trend[df_trend['Month_Label'].isin(selected_months)]
+                # Sort again to ensure lines connect correctly even if picked out of order
+                df_filtered = df_filtered.sort_values("Month")
+
+                # 4. Display Graph
+                if not df_filtered.empty:
+                    fig_trend = go.Figure()
+                    fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Enrollments'], 
+                                                 mode='lines+markers', name='Total Enrollments',
+                                                 line=dict(color='#ff6600', width=3))) 
+                    fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Unique User Signups'], 
+                                                 mode='lines', name='Unique Users',
+                                                 line=dict(color='#ffffff', dash='dot'))) 
+                    
+                    fig_trend.update_layout(
+                        template="plotly_dark", 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        height=450,
+                        margin=dict(l=0, r=0, t=20, b=0)
+                    )
+                    st.plotly_chart(fig_trend, use_container_width=True)
+                    
+                    # 5. Display Data Table (Synchronized)
+                    st.markdown("### Detailed Data")
+                    # Clean up table for display
+                    display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups']].rename(
+                        columns={'Month_Label': 'Month'}
+                    )
+                    st.dataframe(display_table, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Please select at least one month to view data.")
 
         # TAB 2: GEOGRAPHY
         with tab_geo:
@@ -131,7 +177,6 @@ if check_password():
             with col_map:
                 st.subheader("Global Map")
                 if data.get("Country") is not None:
-                    # Map: Dark + Orange Scale
                     fig_map = px.choropleth(data["Country"], locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
@@ -164,7 +209,6 @@ if check_password():
                 if data.get("Completion") is not None:
                     df_comp = data["Completion"].sort_values("Avg Completion %", ascending=True)
                     fig_comp = px.bar(df_comp, x="Avg Completion %", y="Starter Kit", orientation='h')
-                    # Orange scale for heatmap effect
                     fig_comp.update_traces(marker=dict(color=df_comp["Avg Completion %"], colorscale=[[0, "#333"], [1, "#ff6600"]]))
                     fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig_comp, use_container_width=True)
@@ -178,7 +222,6 @@ if check_password():
             
             fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
             fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            # Using columns to center/size the chart appropriately
             c1, c2, c3 = st.columns([1, 2, 1])
             with c2:
                 st.plotly_chart(fig_pie, use_container_width=True)
