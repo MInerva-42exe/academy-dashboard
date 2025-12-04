@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 # --- 1. PAGE CONFIGURATION & THEME ---
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# Minimal CSS to force Black Background & Orange Highlights
+# CSS: Black Background, Orange Highlights, and **EQUAL WIDTH TABS**
 st.markdown("""
 <style>
     /* Main Background - Pure Black */
@@ -14,18 +14,48 @@ st.markdown("""
         background-color: #000000;
         color: #fafafa;
     }
+    
     /* Metric/KPI Values - Orange */
     div[data-testid="stMetricValue"] {
         color: #ff6600 !important;
     }
-    /* Tabs active line - Orange */
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        border-bottom-color: #ff6600 !important;
-    }
+
     /* Multiselect Tag Color */
     .stMultiSelect [data-baseweb="tag"] {
         background-color: #333333 !important;
         color: #ffa500 !important;
+    }
+
+    /* --- TAB STYLING (EQUAL WIDTH) --- */
+    /* Target the container of the tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        width: 100%; /* Full Width */
+        gap: 8px;    /* Gap between tabs */
+    }
+
+    /* Target the individual tabs */
+    .stTabs [data-baseweb="tab"] {
+        flex-grow: 1;    /* Force equal expansion */
+        text-align: center; /* Center the text */
+        height: 50px;
+        background-color: rgba(255, 255, 255, 0.05); /* Subtle dark background for unselected */
+        border-radius: 5px 5px 0 0;
+        color: #9CA3AF;
+        border: none;
+        font-weight: 600;
+    }
+
+    /* Selected Tab Style */
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: rgba(255, 102, 0, 0.15); /* Slight Orange Tint */
+        color: #ff6600; /* Orange Text */
+        border-bottom: 3px solid #ff6600; /* Orange Underline */
+    }
+    
+    /* Hover Effect */
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -71,7 +101,6 @@ if check_password():
             
             # --- CONTINENT MAPPING LOGIC ---
             if data["Country"] is not None:
-                # Comprehensive mapping for standard country names
                 country_to_cont = {
                     'ALGERIA': 'Africa', 'EGYPT': 'Africa', 'ESWATINI': 'Africa', 'ETHIOPIA': 'Africa', 
                     'IVORY COAST': 'Africa', 'LESOTHO': 'Africa', 'MOROCCO': 'Africa', 'MOZAMBIQUE': 'Africa', 
@@ -98,7 +127,6 @@ if check_password():
                     'BRAZIL': 'South America', 'CHILE': 'South America', 'COLOMBIA': 'South America', 
                     'ECUADOR': 'South America', 'PERU': 'South America'
                 }
-                # Create new column
                 data["Country"]["Region"] = data["Country"]["Country"].map(country_to_cont).fillna("Other")
 
             return data
@@ -182,27 +210,22 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months.")
 
-        # TAB 2: GEOGRAPHY (Updated with Filters & Table)
+        # TAB 2: GEOGRAPHY
         with tab_geo:
             st.subheader("Users by Country")
             
             if data.get("Country") is not None:
-                # 1. Filter Logic
+                # Filter Logic
                 all_regions = sorted(data["Country"]["Region"].unique().tolist())
                 filter_options_geo = ["All"] + all_regions
-                
-                # Filter UI
                 selected_regions = st.multiselect("Select Region:", options=filter_options_geo, default=["All"])
                 
-                # Apply Filter
                 if "All" in selected_regions:
                     df_geo_filtered = data["Country"]
                 else:
                     df_geo_filtered = data["Country"][data["Country"]["Region"].isin(selected_regions)]
 
-                # 2. Visualizations
                 col_map, col_tree = st.columns([1, 1])
-                
                 with col_map:
                     fig_map = px.choropleth(df_geo_filtered, locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
@@ -211,17 +234,11 @@ if check_password():
                     st.plotly_chart(fig_map, use_container_width=True)
                 
                 with col_tree:
-                    # Sort for treemap to look good (largest top left)
                     df_tree = df_geo_filtered.sort_values("Total Course Signups", ascending=False).head(30)
-                    
                     fig_tree = px.treemap(
-                        df_tree, 
-                        path=['Country'], 
-                        values='Total Course Signups',
-                        color='Total Course Signups',
-                        color_continuous_scale=[[0, "#444"], [1, "#ff6600"]]
+                        df_tree, path=['Country'], values='Total Course Signups',
+                        color='Total Course Signups', color_continuous_scale=[[0, "#444"], [1, "#ff6600"]]
                     )
-                    
                     fig_tree.update_layout(
                         template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                         margin=dict(t=0, l=0, r=0, b=0), height=450,
@@ -230,14 +247,8 @@ if check_password():
                     fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}', marker=dict(line=dict(color='#000000', width=1)))
                     st.plotly_chart(fig_tree, use_container_width=True)
                 
-                # 3. New Table Below Plots
                 st.markdown("### Detailed Regional Data")
-                # Show columns: Country, Signups, Region
-                st.dataframe(
-                    df_geo_filtered.sort_values("Total Course Signups", ascending=False), 
-                    use_container_width=True, 
-                    hide_index=True
-                )
+                st.dataframe(df_geo_filtered.sort_values("Total Course Signups", ascending=False), use_container_width=True, hide_index=True)
 
         # TAB 3: CONTENT
         with tab_content:
