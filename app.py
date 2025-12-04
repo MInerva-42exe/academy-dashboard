@@ -167,7 +167,7 @@ if check_password():
         # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_business = st.tabs(["Growth", "Geography", "Courses", "Business"])
 
-        # TAB 1: GROWTH (WITH MOM CALCULATIONS)
+        # TAB 1: GROWTH (Updated MoM Calculation & Tooltip)
         with tab_growth:
             st.subheader("Enrollment Trends")
             
@@ -182,8 +182,8 @@ if check_password():
                 df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
                 df_trend = df_trend.sort_values("Month")
                 
-                # --- NEW: CALCULATE MOM GROWTH ---
-                df_trend['MoM_Growth'] = df_trend['Enrollments'].pct_change() * 100
+                # --- CALCULATION CHANGE: MoM based on UNIQUE USERS now ---
+                df_trend['MoM_Growth'] = df_trend['Unique User Signups'].pct_change() * 100
                 
                 # Labels & Filters
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
@@ -212,15 +212,17 @@ if check_password():
                                           height=400, margin=dict(l=0, r=0, t=20, b=0))
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # Chart 2: MoM Growth Bar Chart
-                    st.markdown("#### MoM Growth Rate (%)")
-                    # Color bars: Green for positive, Red for negative
+                    # Chart 2: MoM Growth Bar Chart (With Custom Tooltip)
+                    st.markdown("#### MoM Growth Rate (%) - Based on Unique Users")
                     fig_mom = go.Figure()
                     fig_mom.add_trace(go.Bar(
                         x=df_filtered['Month'], 
                         y=df_filtered['MoM_Growth'],
                         marker=dict(color=df_filtered['MoM_Growth'].apply(lambda x: '#00cc96' if x >= 0 else '#ef553b')),
-                        name='MoM Growth'
+                        name='MoM Growth',
+                        # --- CUSTOM TOOLTIP LOGIC ---
+                        customdata=df_filtered['Unique User Signups'],
+                        hovertemplate='%{x|%b %Y}<br>Growth: %{y:.2f}%<br>Users: %{customdata:,} <extra></extra>'
                     ))
                     fig_mom.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
                     st.plotly_chart(fig_mom, use_container_width=True)
@@ -230,7 +232,6 @@ if check_password():
                     display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups', 'MoM_Growth']].rename(
                         columns={'Month_Label': 'Month', 'Enrollments': 'Net User Enrollments', 'MoM_Growth': 'MoM Growth %'}
                     )
-                    # Format MoM column nicely
                     st.dataframe(display_table.style.format({'MoM Growth %': '{:.2f}%'}), use_container_width=True, hide_index=True)
                 else:
                     st.info("Please select 'All Months' or specific months.")
