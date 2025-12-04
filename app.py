@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import random
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Academy Analytics", layout="wide", page_icon="🎓")
@@ -209,7 +208,14 @@ if check_password():
         # Calculate KPIs
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
+        
+        # --- FIX STARTS HERE ---
+        # Added these lines to define gen_count and blocked_count
         biz_count = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
+        gen_count = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
+        blocked_count = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
+        # --- FIX ENDS HERE ---
+        
         top_region = "N/A"
         if data.get("Country") is not None:
              top_region = data["Country"].sort_values("Total Course Signups", ascending=False).iloc[0]["Country"]
