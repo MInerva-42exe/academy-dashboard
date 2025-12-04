@@ -107,35 +107,24 @@ if check_password():
         # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
 
-        # TAB 1: GROWTH (Updated Default Selection Logic)
+        # TAB 1: GROWTH
         with tab_growth:
             st.subheader("Enrollment Trends")
             
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
-                # 1. Prepare Data
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
-                # Merge into one clean table
                 df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
                 df_trend = df_trend.sort_values("Month")
                 
-                # Create a readable 'Month-Year' column (e.g., "Jan 2024")
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
-                
-                # 2. Smart Filter Logic
                 all_months = df_trend['Month_Label'].unique().tolist()
-                
-                # Add "All Months" to the options
                 filter_options = ["All Months"] + all_months
                 
-                # --- Default to 2025+ ---
-                # Get list of months where year is >= 2025
                 default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
-                
-                # Safety check: If for some reason there is no 2025 data, fallback to "All Months"
                 current_default = default_months if default_months else ["All Months"]
 
                 selected_options = st.multiselect(
@@ -144,14 +133,12 @@ if check_password():
                     default=current_default
                 )
                 
-                # 3. Filter Application
                 if "All Months" in selected_options:
                     df_filtered = df_trend
                 else:
                     df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)]
                     df_filtered = df_filtered.sort_values("Month")
 
-                # 4. Display Graph
                 if not df_filtered.empty:
                     fig_trend = go.Figure()
                     fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Enrollments'], 
@@ -170,7 +157,6 @@ if check_password():
                     )
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # 5. Display Data Table
                     st.markdown("### Detailed Data")
                     display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups']].rename(
                         columns={'Month_Label': 'Month', 'Enrollments': 'Net User Enrollments'}
@@ -179,9 +165,9 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months to view data.")
 
-        # TAB 2: GEOGRAPHY
+        # TAB 2: GEOGRAPHY (TREEMAP VERSION)
         with tab_geo:
-            col_map, col_bar = st.columns([2, 1])
+            col_map, col_tree = st.columns([1, 1]) # Equal width for balance
             with col_map:
                 st.subheader("Global Map")
                 if data.get("Country") is not None:
@@ -191,14 +177,30 @@ if check_password():
                     fig_map.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', geo=dict(bgcolor='rgba(0,0,0,0)'))
                     st.plotly_chart(fig_map, use_container_width=True)
             
-            with col_bar:
-                st.subheader("Top Regions")
+            with col_tree:
+                st.subheader("Regional Distribution (Treemap)")
                 if data.get("Country") is not None:
-                    top_10 = data["Country"].sort_values("Total Course Signups", ascending=False).head(10)
-                    fig_bar = px.bar(top_10, x="Total Course Signups", y="Country", orientation='h')
-                    fig_bar.update_traces(marker_color='#ff6600') 
-                    fig_bar.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
-                    st.plotly_chart(fig_bar, use_container_width=True)
+                    # Take top 30 countries for a rich but readable treemap
+                    df_tree = data["Country"].sort_values("Total Course Signups", ascending=False).head(30)
+                    
+                    fig_tree = px.treemap(
+                        df_tree, 
+                        path=['Country'], 
+                        values='Total Course Signups',
+                        color='Total Course Signups',
+                        color_continuous_scale=[[0, "#444"], [1, "#ff6600"]] # Grey to Orange scale
+                    )
+                    
+                    fig_tree.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        margin=dict(t=20, l=0, r=0, b=0),
+                        height=450
+                    )
+                    # Customize hover info
+                    fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}')
+                    
+                    st.plotly_chart(fig_tree, use_container_width=True)
 
         # TAB 3: CONTENT
         with tab_content:
