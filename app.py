@@ -95,7 +95,6 @@ if check_password():
             data["Generic_Email"] = xls.get("Generic Emails")
             data["Blocked_Email"] = xls.get("Blocked Emails")
             data["Starter_vs_Non"] = xls.get("Starter_vs_NonStarter")
-            # --- NEW SHEETS ---
             data["Badges"] = xls.get("Badges Issued")
             data["Leads"] = xls.get("Leads Generated")
             
@@ -148,16 +147,17 @@ if check_password():
         # Calculate KPIs
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
-        
-        # New KPIs
         total_badges = data["Badges"]["Number of Badges"].sum() if data.get("Badges") is not None else 0
         total_leads = data["Leads"]["Number of Leads Gen"].sum() if data.get("Leads") is not None else 0
 
-        # Counts for Pie Chart
         biz_count = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
         gen_count = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
         blocked_count = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
         
+        top_region = "N/A"
+        if data.get("Country") is not None:
+             top_region = data["Country"].sort_values("Total Course Signups", ascending=False).iloc[0]["Country"]
+
         kpi1, kpi2, kpi3, kpi4 = st.columns(4)
         kpi1.metric("Net User Enrollments", f"{total_enrolls:,}")
         kpi2.metric("Unique Users", f"{total_unique:,}")
@@ -167,18 +167,26 @@ if check_password():
         # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_business = st.tabs(["Growth", "Geography", "Courses", "Business"])
 
-        # TAB 1: GROWTH
+        # TAB 1: GROWTH (WITH MOM CALCULATIONS)
         with tab_growth:
             st.subheader("Enrollment Trends")
+            
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
+                # 1. Prepare Data
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
-                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0).sort_values("Month")
-                df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
+                # Merge into one clean table
+                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
+                df_trend = df_trend.sort_values("Month")
                 
+                # --- NEW: CALCULATE MOM GROWTH ---
+                df_trend['MoM_Growth'] = df_trend['Enrollments'].pct_change() * 100
+                
+                # Labels & Filters
+                df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
                 all_months = df_trend['Month_Label'].unique().tolist()
                 filter_options = ["All Months"] + all_months
                 default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
@@ -192,6 +200,7 @@ if check_password():
                     df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)].sort_values("Month")
 
                 if not df_filtered.empty:
+                    # Chart 1: Main Trend
                     fig_trend = go.Figure()
                     fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Enrollments'], 
                                                  mode='lines+markers', name='Net User Enrollments',
@@ -200,23 +209,36 @@ if check_password():
                                                  mode='lines', name='Unique Users',
                                                  line=dict(color='#ffffff', dash='dot'))) 
                     fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-                                          height=450, margin=dict(l=0, r=0, t=20, b=0))
+                                          height=400, margin=dict(l=0, r=0, t=20, b=0))
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
+                    # Chart 2: MoM Growth Bar Chart
+                    st.markdown("#### MoM Growth Rate (%)")
+                    # Color bars: Green for positive, Red for negative
+                    fig_mom = go.Figure()
+                    fig_mom.add_trace(go.Bar(
+                        x=df_filtered['Month'], 
+                        y=df_filtered['MoM_Growth'],
+                        marker=dict(color=df_filtered['MoM_Growth'].apply(lambda x: '#00cc96' if x >= 0 else '#ef553b')),
+                        name='MoM Growth'
+                    ))
+                    fig_mom.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
+                    st.plotly_chart(fig_mom, use_container_width=True)
+
+                    # Data Table
                     st.markdown("### Detailed Data")
-                    display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups']].rename(
-                        columns={'Month_Label': 'Month', 'Enrollments': 'Net User Enrollments'}
+                    display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups', 'MoM_Growth']].rename(
+                        columns={'Month_Label': 'Month', 'Enrollments': 'Net User Enrollments', 'MoM_Growth': 'MoM Growth %'}
                     )
-                    st.dataframe(display_table, use_container_width=True, hide_index=True)
+                    # Format MoM column nicely
+                    st.dataframe(display_table.style.format({'MoM Growth %': '{:.2f}%'}), use_container_width=True, hide_index=True)
                 else:
                     st.info("Please select 'All Months' or specific months.")
 
         # TAB 2: GEOGRAPHY
         with tab_geo:
             st.subheader("Users by Country")
-            
             if data.get("Country") is not None:
-                # Filter Logic
                 all_regions = sorted(data["Country"]["Region"].unique().tolist())
                 filter_options_geo = ["All"] + all_regions
                 selected_regions = st.multiselect("Select Region:", options=filter_options_geo, default=["All"])
@@ -231,17 +253,12 @@ if check_password():
                     fig_map = px.choropleth(df_geo_filtered, locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
-                    
                     fig_map.update_layout(
-                        template="plotly_dark", 
-                        paper_bgcolor='rgba(0,0,0,0)', 
+                        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
                         geo=dict(bgcolor='rgba(0,0,0,0)', projection_type="natural earth"),
-                        dragmode="pan", 
-                        height=500,     
-                        margin=dict(l=0, r=0, t=0, b=0)
+                        dragmode="pan", height=500, margin=dict(l=0, r=0, t=0, b=0)
                     )
-                    config = {'scrollZoom': True, 'displayModeBar': False, 'showTips': False}
-                    st.plotly_chart(fig_map, use_container_width=True, config=config)
+                    st.plotly_chart(fig_map, use_container_width=True, config={'scrollZoom': True, 'displayModeBar': False})
                 
                 with col_tree:
                     df_tree = df_geo_filtered.sort_values("Total Course Signups", ascending=False).head(30)
@@ -271,29 +288,20 @@ if check_password():
                     fig_course.update_traces(marker_color='#ff6600') 
                     fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_course, use_container_width=True)
-                    
                     st.markdown("#### All Courses")
                     st.dataframe(data["Course"].sort_values("Sign Ups", ascending=False), use_container_width=True, hide_index=True)
             
             with col_c2:
-                # --- NEW: BADGES ISSUED CHART ---
                 st.subheader("Badges Issued")
                 if data.get("Badges") is not None:
-                    df_badges = data["Badges"].copy()
-                    df_badges["Month"] = pd.to_datetime(df_badges["Month"])
-                    df_badges = df_badges.sort_values("Month")
-                    
+                    df_badges = data["Badges"].copy().sort_values("Month")
                     fig_badges = px.line(df_badges, x="Month", y="Number of Badges", markers=True)
                     fig_badges.update_traces(line_color='#ff6600', line_width=3)
                     fig_badges.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
                     st.plotly_chart(fig_badges, use_container_width=True)
-                    
                     st.markdown("#### Badges Data")
                     st.dataframe(df_badges, use_container_width=True, hide_index=True)
-                else:
-                    st.info("Badges data not available in Excel.")
 
-                # Completion Rates (Moved down slightly or below if preferred, kept here for layout)
                 st.subheader("Completion Rates")
                 if data.get("Completion") is not None:
                     df_comp = data["Completion"].sort_values("Avg Completion %", ascending=True)
@@ -301,41 +309,33 @@ if check_password():
                     fig_comp.update_traces(marker=dict(color=df_comp["Avg Completion %"], colorscale=[[0, "#333"], [1, "#ff6600"]]))
                     fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig_comp, use_container_width=True)
-                    
                     st.markdown("#### Completion Data")
                     st.dataframe(df_comp.sort_values("Avg Completion %", ascending=False), use_container_width=True, hide_index=True)
 
-        # TAB 4: BUSINESS (Renamed from Quality)
+        # TAB 4: BUSINESS
         with tab_business:
             col_b1, col_b2 = st.columns(2)
-            
             with col_b1:
                 st.subheader("User Segmentation")
                 labels = ["Business", "Generic", "Blocked"]
                 values = [biz_count, gen_count, blocked_count]
                 colors = ['#ff6600', '#9e9e9e', '#424242'] 
-                
                 fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, marker=dict(colors=colors))])
                 fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_pie, use_container_width=True)
             
             with col_b2:
-                # --- NEW: LEADS GENERATED CHART ---
                 st.subheader("Leads Generated")
                 if data.get("Leads") is not None:
-                    df_leads = data["Leads"].copy()
-                    df_leads["Month"] = pd.to_datetime(df_leads["Month"])
-                    df_leads = df_leads.sort_values("Month")
-                    
+                    df_leads = data["Leads"].copy().sort_values("Month")
                     fig_leads = px.line(df_leads, x="Month", y="Number of Leads Gen", markers=True)
                     fig_leads.update_traces(line_color='#ff6600', line_width=3)
                     fig_leads.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
                     st.plotly_chart(fig_leads, use_container_width=True)
-                    
                     st.markdown("#### Leads Data")
                     st.dataframe(df_leads, use_container_width=True, hide_index=True)
                 else:
-                    st.info("Leads data not available in Excel.")
+                    st.info("Leads data not available.")
 
     else:
         st.warning("Please upload 'final_unified_master_with_segments.xlsx' to GitHub.")
