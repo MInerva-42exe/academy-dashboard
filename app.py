@@ -10,10 +10,7 @@ st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 st.markdown("""
 <style>
     /* --- FONTS --- */
-    /* Import Lato (The closest open-source match to Zoho Puvi) from Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
-
-    /* Force Lato on everything */
     html, body, [class*="css"] {
         font-family: 'Lato', sans-serif !important;
     }
@@ -24,18 +21,16 @@ st.markdown("""
         color: #fafafa;
     }
     
-    /* Metric/KPI Values - Orange */
     div[data-testid="stMetricValue"] {
         color: #ff6600 !important;
     }
 
-    /* Multiselect Tag Color */
     .stMultiSelect [data-baseweb="tag"] {
         background-color: #333333 !important;
         color: #ffa500 !important;
     }
 
-    /* --- TAB STYLING (EQUAL WIDTH) --- */
+    /* --- TAB STYLING --- */
     .stTabs [data-baseweb="tab-list"] {
         width: 100%;
         gap: 8px;
@@ -212,11 +207,12 @@ if check_password():
                 else:
                     st.info("Please select 'All Months' or specific months.")
 
-        # TAB 2: GEOGRAPHY
+        # TAB 2: GEOGRAPHY (LOCKED MAP)
         with tab_geo:
             st.subheader("Users by Country")
             
             if data.get("Country") is not None:
+                # Filter Logic
                 all_regions = sorted(data["Country"]["Region"].unique().tolist())
                 filter_options_geo = ["All"] + all_regions
                 selected_regions = st.multiselect("Select Region:", options=filter_options_geo, default=["All"])
@@ -228,11 +224,31 @@ if check_password():
 
                 col_map, col_tree = st.columns([1, 1])
                 with col_map:
+                    # --- LOCKED MAP CONFIGURATION ---
                     fig_map = px.choropleth(df_geo_filtered, locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
-                    fig_map.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', geo=dict(bgcolor='rgba(0,0,0,0)'))
-                    st.plotly_chart(fig_map, use_container_width=True)
+                    
+                    fig_map.update_layout(
+                        template="plotly_dark", 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        geo=dict(
+                            bgcolor='rgba(0,0,0,0)',
+                            projection_type="natural earth", # Global nice looking projection
+                        ),
+                        dragmode="pan", # Lock movement to panning (no box select)
+                        height=500,     # Lock overall size
+                        margin=dict(l=0, r=0, t=0, b=0)
+                    )
+                    
+                    # Lock interaction config
+                    config = {
+                        'scrollZoom': True,        # Enable scroll to zoom
+                        'displayModeBar': False,   # Hide the toolbar (prevents resizing)
+                        'showTips': False
+                    }
+                    
+                    st.plotly_chart(fig_map, use_container_width=True, config=config)
                 
                 with col_tree:
                     df_tree = df_geo_filtered.sort_values("Total Course Signups", ascending=False).head(30)
@@ -242,7 +258,7 @@ if check_password():
                     )
                     fig_tree.update_layout(
                         template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(t=10, l=10, r=10, b=10), height=450,
+                        margin=dict(t=10, l=10, r=10, b=10), height=500, # Matches map height
                         shapes=[dict(type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1, line=dict(color="#333", width=2))]
                     )
                     fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}', marker=dict(line=dict(color='#000000', width=1)))
