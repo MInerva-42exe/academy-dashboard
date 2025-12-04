@@ -57,6 +57,71 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- TOOLTIP DEFINITIONS ---
+METRIC_TOOLTIPS = {
+    "growth_trend": """
+    **Net User Enrollments vs Unique Users**
+    
+    **Metric:** Comparison of total activity volume versus actual head count.
+    
+    **Calculation:**
+    • **Net Enrollments:** Sum of all course signups (one user can have multiple).
+    • **Unique Users:** Count of distinct email addresses active in that month.
+    """,
+    "mom_growth": """
+    **Month-over-Month (MoM) Growth Velocity**
+    
+    **Metric:** The percentage rate at which your user base is expanding (or shrinking) compared to the previous month.
+    
+    **Calculation:** ((Current Unique Users - Previous Unique Users) / Previous Unique Users) * 100
+    """,
+    "geo_users": """
+    **Global User Distribution**
+    
+    **Metric:** Total enrollment volume aggregated by country.
+    
+    **Calculation:** Sum of 'Total Course Signups' grouped by Country. Filtered by the 'Region' dropdown logic.
+    """,
+    "popular_courses": """
+    **Top 30 Most Popular Courses**
+    
+    **Metric:** The specific courses driving the most interest.
+    
+    **Calculation:** Total raw signup count per course, sorted from highest to lowest. Limited to top 30.
+    """,
+    "badges": """
+    **Badges Issued (Certifications)**
+    
+    **Metric:** Volume of users who successfully completed a course and earned a badge.
+    
+    **Calculation:** Sum of the 'Number of Badges' column from the Badges Issued sheet, aggregated by month.
+    """,
+    "completion": """
+    **Course Completion Rates**
+    
+    **Metric:** The percentage of enrolled users who actually finish the material.
+    
+    **Calculation:** Pre-calculated average from the 'Starter Completion Avg' sheet. 
+    (Usually: Badges Issued / Total Enrollments * 100).
+    """,
+    "segmentation": """
+    **User Quality Segmentation**
+    
+    **Metric:** Breakdown of the user base by email domain quality.
+    
+    **Calculation:** • **Business:** Professional domains (excluding public providers).
+    • **Generic:** Public providers (Gmail, Yahoo, etc.).
+    • **Blocked:** Known spam or internal test accounts.
+    """,
+    "leads": """
+    **Marketing Leads Generated**
+    
+    **Metric:** Top-of-funnel marketing performance tracking new potential customers.
+    
+    **Calculation:** Sum of 'Number of Leads Gen' from the Leads Generated sheet, aggregated by month.
+    """
+}
+
 # --- 2. PASSWORD PROTECTION ---
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -80,6 +145,7 @@ if check_password():
     # --- 3. DATA LOADING ---
     @st.cache_data
     def load_data():
+        # KEPT ORIGINAL FILENAME
         file_path = "final_unified_master_with_segments.xlsx"
         try:
             xls = pd.read_excel(file_path, sheet_name=None)
@@ -169,24 +235,27 @@ if check_password():
 
         # TAB 1: GROWTH
         with tab_growth:
-            st.subheader("Enrollment Trends")
+            # Interactive Header
+            st.subheader("Enrollment Trends", help=METRIC_TOOLTIPS["growth_trend"])
             
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
+                # 1. Prepare Data
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
+                # Merge into one clean table
                 df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
                 df_trend = df_trend.sort_values("Month")
                 
+                # --- CALCULATION CHANGE: MoM based on UNIQUE USERS now ---
                 df_trend['MoM_Growth'] = df_trend['Unique User Signups'].pct_change() * 100
                 
+                # Labels & Filters
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
                 all_months = df_trend['Month_Label'].unique().tolist()
                 filter_options = ["All Months"] + all_months
-                
-                # Default Logic (Safe Check)
                 default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
                 current_default = default_months if default_months else ["All Months"]
 
@@ -212,14 +281,15 @@ if check_password():
                     fig_trend.update_xaxes(dtick="M1", tickformat="%b %Y")
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # MoM Chart
-                    st.markdown("#### MoM Growth Rate (%) - Based on Unique Users")
+                    # MoM Chart with Tooltip Header
+                    st.markdown("#### MoM Growth Rate (%)", help=METRIC_TOOLTIPS["mom_growth"])
                     fig_mom = go.Figure()
                     fig_mom.add_trace(go.Bar(
                         x=df_filtered['Month'], 
                         y=df_filtered['MoM_Growth'],
                         marker=dict(color=df_filtered['MoM_Growth'].apply(lambda x: '#00cc96' if x >= 0 else '#ef553b')),
                         name='MoM Growth',
+                        # --- CUSTOM TOOLTIP LOGIC ---
                         customdata=df_filtered['Unique User Signups'],
                         hovertemplate='%{x|%b %Y}<br>Growth: %{y:.2f}%<br>Users: %{customdata:,} <extra></extra>'
                     ))
@@ -238,7 +308,7 @@ if check_password():
 
         # TAB 2: GEOGRAPHY
         with tab_geo:
-            st.subheader("Users by Country")
+            st.subheader("Users by Country", help=METRIC_TOOLTIPS["geo_users"])
             if data.get("Country") is not None:
                 all_regions = sorted(data["Country"]["Region"].unique().tolist())
                 filter_options_geo = ["All"] + all_regions
@@ -282,18 +352,26 @@ if check_password():
         with tab_content:
             col_c1, col_c2 = st.columns(2)
             with col_c1:
-                st.subheader("Popular Courses")
+                st.subheader("Popular Courses", help=METRIC_TOOLTIPS["popular_courses"])
                 if data.get("Course") is not None:
+                    # --- INCREASED TO TOP 30 ---
                     df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(30)
+                    
                     fig_course = px.bar(df_course_top, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
-                    fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'}, height=800)
+                    fig_course.update_layout(
+                        template="plotly_dark", 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        yaxis={'categoryorder':'total ascending'},
+                        height=800 # Increased height for 30 bars
+                    )
                     st.plotly_chart(fig_course, use_container_width=True)
                     st.markdown("#### All Courses")
                     st.dataframe(data["Course"].sort_values("Sign Ups", ascending=False), use_container_width=True, hide_index=True)
             
             with col_c2:
-                st.subheader("Badges Issued")
+                st.subheader("Badges Issued", help=METRIC_TOOLTIPS["badges"])
                 if data.get("Badges") is not None:
                     df_badges = data["Badges"].copy().sort_values("Month")
                     fig_badges = px.line(df_badges, x="Month", y="Number of Badges", markers=True)
@@ -307,7 +385,7 @@ if check_password():
                     st.markdown("#### Badges Data")
                     st.dataframe(df_badges, use_container_width=True, hide_index=True)
 
-                st.subheader("Completion Rates")
+                st.subheader("Completion Rates", help=METRIC_TOOLTIPS["completion"])
                 if data.get("Completion") is not None:
                     df_comp = data["Completion"].sort_values("Avg Completion %", ascending=True)
                     fig_comp = px.bar(df_comp, x="Avg Completion %", y="Starter Kit", orientation='h')
@@ -321,7 +399,7 @@ if check_password():
         with tab_business:
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                st.subheader("User Segmentation")
+                st.subheader("User Segmentation", help=METRIC_TOOLTIPS["segmentation"])
                 labels = ["Business", "Generic", "Blocked"]
                 values = [biz_count, gen_count, blocked_count]
                 colors = ['#ff6600', '#9e9e9e', '#424242'] 
@@ -330,7 +408,7 @@ if check_password():
                 st.plotly_chart(fig_pie, use_container_width=True)
             
             with col_b2:
-                st.subheader("Leads Generated")
+                st.subheader("Leads Generated", help=METRIC_TOOLTIPS["leads"])
                 if data.get("Leads") is not None:
                     df_leads = data["Leads"].copy().sort_values("Month")
                     fig_leads = px.line(df_leads, x="Month", y="Number of Leads Gen", markers=True)
