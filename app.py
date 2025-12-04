@@ -68,6 +68,39 @@ if check_password():
             data["Generic_Email"] = xls.get("Generic Emails")
             data["Blocked_Email"] = xls.get("Blocked Emails")
             data["Starter_vs_Non"] = xls.get("Starter_vs_NonStarter")
+            
+            # --- CONTINENT MAPPING LOGIC ---
+            if data["Country"] is not None:
+                # Comprehensive mapping for standard country names
+                country_to_cont = {
+                    'ALGERIA': 'Africa', 'EGYPT': 'Africa', 'ESWATINI': 'Africa', 'ETHIOPIA': 'Africa', 
+                    'IVORY COAST': 'Africa', 'LESOTHO': 'Africa', 'MOROCCO': 'Africa', 'MOZAMBIQUE': 'Africa', 
+                    'NAMIBIA': 'Africa', 'NIGERIA': 'Africa', 'SENEGAL': 'Africa', 'SOUTH AFRICA': 'Africa', 
+                    'TANZANIA': 'Africa', 'UGANDA': 'Africa', 'ZAMBIA': 'Africa', 'ZIMBABWE': 'Africa', 
+                    'AZERBAIJAN': 'Asia', 'BAHRAIN': 'Asia', 'BANGLADESH': 'Asia', 'BRUNEI': 'Asia', 
+                    'HONG KONG': 'Asia', 'INDIA': 'Asia', 'INDONESIA': 'Asia', 'IRAN': 'Asia', 'IRAQ': 'Asia', 
+                    'ISRAEL': 'Asia', 'JAPAN': 'Asia', 'JORDAN': 'Asia', 'KUWAIT': 'Asia', 'MALAYSIA': 'Asia', 
+                    'NEPAL': 'Asia', 'OMAN': 'Asia', 'PAKISTAN': 'Asia', 'PHILIPPINES': 'Asia', 'QATAR': 'Asia', 
+                    'SAUDI ARABIA': 'Asia', 'SINGAPORE': 'Asia', 'SOUTH KOREA': 'Asia', 'SRI LANKA': 'Asia', 
+                    'TAIWAN': 'Asia', 'THAILAND': 'Asia', 'TURKEY': 'Asia', 'UNITED ARAB EMIRATES': 'Asia', 
+                    'VIETNAM': 'Asia', 'ALBANIA': 'Europe', 'AUSTRIA': 'Europe', 'BELGIUM': 'Europe', 
+                    'BULGARIA': 'Europe', 'DENMARK': 'Europe', 'FINLAND': 'Europe', 'FRANCE': 'Europe', 
+                    'GERMANY': 'Europe', 'GREECE': 'Europe', 'HUNGARY': 'Europe', 'ICELAND': 'Europe', 
+                    'IRELAND': 'Europe', 'ITALY': 'Europe', 'LUXEMBOURG': 'Europe', 'MOLDOVA': 'Europe', 
+                    'NETHERLANDS': 'Europe', 'NORTH MACEDONIA': 'Europe', 'NORWAY': 'Europe', 'POLAND': 'Europe', 
+                    'PORTUGAL': 'Europe', 'ROMANIA': 'Europe', 'RUSSIA': 'Europe', 'SERBIA': 'Europe', 
+                    'SLOVENIA': 'Europe', 'SPAIN': 'Europe', 'SWEDEN': 'Europe', 'SWITZERLAND': 'Europe', 
+                    'UKRAINE': 'Europe', 'UNITED KINGDOM': 'Europe', 'BARBADOS': 'North America', 
+                    'CANADA': 'North America', 'COSTA RICA': 'North America', 'CURACAO': 'North America', 
+                    'GUATEMALA': 'North America', 'MEXICO': 'North America', 'NICARAGUA': 'North America', 
+                    'PANAMA': 'North America', 'TRINIDAD AND TOBAGO': 'North America', 'UNITED STATES': 'North America', 
+                    'AUSTRALIA': 'Oceania', 'FIJI': 'Oceania', 'GUAM': 'Oceania', 'NEW ZEALAND': 'Oceania', 
+                    'BRAZIL': 'South America', 'CHILE': 'South America', 'COLOMBIA': 'South America', 
+                    'ECUADOR': 'South America', 'PERU': 'South America'
+                }
+                # Create new column
+                data["Country"]["Region"] = data["Country"]["Country"].map(country_to_cont).fillna("Other")
+
             return data
         except FileNotFoundError:
             st.error(f"Could not find {file_path}. Please upload it to GitHub.")
@@ -88,7 +121,6 @@ if check_password():
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         
-        # Counts for Quality Tab
         biz_count = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
         gen_count = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
         blocked_count = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
@@ -97,7 +129,6 @@ if check_password():
         if data.get("Country") is not None:
              top_region = data["Country"].sort_values("Total Course Signups", ascending=False).iloc[0]["Country"]
 
-        # KPI Row
         kpi1, kpi2, kpi3, kpi4 = st.columns(4)
         kpi1.metric("Net User Enrollments", f"{total_enrolls:,}")
         kpi2.metric("Unique Users", f"{total_unique:,}")
@@ -110,34 +141,26 @@ if check_password():
         # TAB 1: GROWTH
         with tab_growth:
             st.subheader("Enrollment Trends")
-            
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
-                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
-                df_trend = df_trend.sort_values("Month")
-                
+                df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0).sort_values("Month")
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
+                
                 all_months = df_trend['Month_Label'].unique().tolist()
                 filter_options = ["All Months"] + all_months
-                
                 default_months = df_trend[df_trend['Month'].dt.year >= 2025]['Month_Label'].unique().tolist()
                 current_default = default_months if default_months else ["All Months"]
 
-                selected_options = st.multiselect(
-                    "Select Timeframe:",
-                    options=filter_options,
-                    default=current_default
-                )
+                selected_options = st.multiselect("Select Timeframe:", options=filter_options, default=current_default)
                 
                 if "All Months" in selected_options:
                     df_filtered = df_trend
                 else:
-                    df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)]
-                    df_filtered = df_filtered.sort_values("Month")
+                    df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)].sort_values("Month")
 
                 if not df_filtered.empty:
                     fig_trend = go.Figure()
@@ -147,14 +170,8 @@ if check_password():
                     fig_trend.add_trace(go.Scatter(x=df_filtered['Month'], y=df_filtered['Unique User Signups'], 
                                                  mode='lines', name='Unique Users',
                                                  line=dict(color='#ffffff', dash='dot'))) 
-                    
-                    fig_trend.update_layout(
-                        template="plotly_dark", 
-                        paper_bgcolor='rgba(0,0,0,0)', 
-                        plot_bgcolor='rgba(0,0,0,0)', 
-                        height=450,
-                        margin=dict(l=0, r=0, t=20, b=0)
-                    )
+                    fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+                                          height=450, margin=dict(l=0, r=0, t=20, b=0))
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
                     st.markdown("### Detailed Data")
@@ -163,24 +180,39 @@ if check_password():
                     )
                     st.dataframe(display_table, use_container_width=True, hide_index=True)
                 else:
-                    st.info("Please select 'All Months' or specific months to view data.")
+                    st.info("Please select 'All Months' or specific months.")
 
-        # TAB 2: GEOGRAPHY (SINGLE TITLE)
+        # TAB 2: GEOGRAPHY (Updated with Filters & Table)
         with tab_geo:
-            st.subheader("Users by Country")  # Single Unified Title
+            st.subheader("Users by Country")
             
-            col_map, col_tree = st.columns([1, 1])
-            with col_map:
-                if data.get("Country") is not None:
-                    fig_map = px.choropleth(data["Country"], locations="Country", locationmode='country names',
+            if data.get("Country") is not None:
+                # 1. Filter Logic
+                all_regions = sorted(data["Country"]["Region"].unique().tolist())
+                filter_options_geo = ["All"] + all_regions
+                
+                # Filter UI
+                selected_regions = st.multiselect("Select Region:", options=filter_options_geo, default=["All"])
+                
+                # Apply Filter
+                if "All" in selected_regions:
+                    df_geo_filtered = data["Country"]
+                else:
+                    df_geo_filtered = data["Country"][data["Country"]["Region"].isin(selected_regions)]
+
+                # 2. Visualizations
+                col_map, col_tree = st.columns([1, 1])
+                
+                with col_map:
+                    fig_map = px.choropleth(df_geo_filtered, locations="Country", locationmode='country names',
                                             color="Total Course Signups", 
                                             color_continuous_scale=["#1e1e1e", "#ff6600"])
                     fig_map.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', geo=dict(bgcolor='rgba(0,0,0,0)'))
                     st.plotly_chart(fig_map, use_container_width=True)
-            
-            with col_tree:
-                if data.get("Country") is not None:
-                    df_tree = data["Country"].sort_values("Total Course Signups", ascending=False).head(30)
+                
+                with col_tree:
+                    # Sort for treemap to look good (largest top left)
+                    df_tree = df_geo_filtered.sort_values("Total Course Signups", ascending=False).head(30)
                     
                     fig_tree = px.treemap(
                         df_tree, 
@@ -191,26 +223,21 @@ if check_password():
                     )
                     
                     fig_tree.update_layout(
-                        template="plotly_dark",
-                        paper_bgcolor='rgba(0,0,0,0)', # Transparent
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(t=0, l=0, r=0, b=0), # Tight fit
-                        height=450,
-                        # VISIBLE BORDER AROUND TREEMAP
-                        shapes=[dict(
-                            type="rect", 
-                            xref="paper", yref="paper",
-                            x0=0, y0=0, x1=1, y1=1,
-                            line=dict(color="#333", width=2)
-                        )]
+                        template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                        margin=dict(t=0, l=0, r=0, b=0), height=450,
+                        shapes=[dict(type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1, line=dict(color="#333", width=2))]
                     )
-                    # Clean black borders between blocks
-                    fig_tree.update_traces(
-                        hovertemplate='<b>%{label}</b><br>Signups: %{value}',
-                        marker=dict(line=dict(color='#000000', width=1)) 
-                    )
-                    
+                    fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}', marker=dict(line=dict(color='#000000', width=1)))
                     st.plotly_chart(fig_tree, use_container_width=True)
+                
+                # 3. New Table Below Plots
+                st.markdown("### Detailed Regional Data")
+                # Show columns: Country, Signups, Region
+                st.dataframe(
+                    df_geo_filtered.sort_values("Total Course Signups", ascending=False), 
+                    use_container_width=True, 
+                    hide_index=True
+                )
 
         # TAB 3: CONTENT
         with tab_content:
