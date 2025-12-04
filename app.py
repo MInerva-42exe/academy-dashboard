@@ -25,7 +25,7 @@ st.markdown("""
     /* Multiselect Tag Color */
     .stMultiSelect [data-baseweb="tag"] {
         background-color: #333333 !important;
-        color: #ffa500 !important; /* Orange text in tags */
+        color: #ffa500 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -107,7 +107,7 @@ if check_password():
         # --- 5. TABS ---
         tab_growth, tab_geo, tab_content, tab_qual = st.tabs(["Growth", "Geography", "Courses", "Quality"])
 
-        # TAB 1: GROWTH (Updated with Filters)
+        # TAB 1: GROWTH (Updated with Clean 'All' Filter)
         with tab_growth:
             st.subheader("Enrollment Trends")
             
@@ -122,25 +122,30 @@ if check_password():
                 df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
                 df_trend = df_trend.sort_values("Month")
                 
-                # Create a readable 'Month-Year' column for the dropdown (e.g., "Jan 2024")
+                # Create a readable 'Month-Year' column (e.g., "Jan 2024")
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
                 
-                # 2. Create Filter
-                # Get list of all available months
+                # 2. Smart Filter Logic
                 all_months = df_trend['Month_Label'].unique().tolist()
                 
-                # Multiselect Widget
-                selected_months = st.multiselect(
+                # Add "All Months" to the options
+                filter_options = ["All Months"] + all_months
+                
+                # Default selection is JUST "All Months" to keep UI clean
+                selected_options = st.multiselect(
                     "Select Timeframe:",
-                    options=all_months,
-                    default=all_months  # Default to showing everything
+                    options=filter_options,
+                    default=["All Months"]
                 )
                 
-                # 3. Filter Data based on selection
-                # Filter the dataframe to only include rows where the label is in the selected list
-                df_filtered = df_trend[df_trend['Month_Label'].isin(selected_months)]
-                # Sort again to ensure lines connect correctly even if picked out of order
-                df_filtered = df_filtered.sort_values("Month")
+                # 3. Filter Application
+                # If "All Months" is selected (even if others are too), show everything
+                if "All Months" in selected_options:
+                    df_filtered = df_trend
+                else:
+                    # Otherwise, filter by the specific months chosen
+                    df_filtered = df_trend[df_trend['Month_Label'].isin(selected_options)]
+                    df_filtered = df_filtered.sort_values("Month")
 
                 # 4. Display Graph
                 if not df_filtered.empty:
@@ -161,15 +166,14 @@ if check_password():
                     )
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # 5. Display Data Table (Synchronized)
+                    # 5. Display Data Table
                     st.markdown("### Detailed Data")
-                    # Clean up table for display
                     display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups']].rename(
                         columns={'Month_Label': 'Month'}
                     )
                     st.dataframe(display_table, use_container_width=True, hide_index=True)
                 else:
-                    st.info("Please select at least one month to view data.")
+                    st.info("Please select 'All Months' or specific months to view data.")
 
         # TAB 2: GEOGRAPHY
         with tab_geo:
