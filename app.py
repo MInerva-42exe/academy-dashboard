@@ -234,17 +234,16 @@ if check_password():
                         paper_bgcolor='rgba(0,0,0,0)', 
                         geo=dict(
                             bgcolor='rgba(0,0,0,0)',
-                            projection_type="natural earth", # Global nice looking projection
+                            projection_type="natural earth", 
                         ),
-                        dragmode="pan", # Lock movement to panning (no box select)
-                        height=500,     # Lock overall size
+                        dragmode="pan", 
+                        height=500,     
                         margin=dict(l=0, r=0, t=0, b=0)
                     )
                     
-                    # Lock interaction config
                     config = {
-                        'scrollZoom': True,        # Enable scroll to zoom
-                        'displayModeBar': False,   # Hide the toolbar (prevents resizing)
+                        'scrollZoom': True,       
+                        'displayModeBar': False,   
                         'showTips': False
                     }
                     
@@ -258,7 +257,7 @@ if check_password():
                     )
                     fig_tree.update_layout(
                         template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(t=10, l=10, r=10, b=10), height=500, # Matches map height
+                        margin=dict(t=10, l=10, r=10, b=10), height=500, 
                         shapes=[dict(type="rect", xref="paper", yref="paper", x0=0, y0=0, x1=1, y1=1, line=dict(color="#333", width=2))]
                     )
                     fig_tree.update_traces(hovertemplate='<b>%{label}</b><br>Signups: %{value}', marker=dict(line=dict(color='#000000', width=1)))
@@ -267,26 +266,38 @@ if check_password():
                 st.markdown("### Detailed Regional Data")
                 st.dataframe(df_geo_filtered.sort_values("Total Course Signups", ascending=False), use_container_width=True, hide_index=True)
 
-        # TAB 3: CONTENT
+        # TAB 3: CONTENT (UPDATED WITH ALL VALUES TABLE)
         with tab_content:
             col_c1, col_c2 = st.columns(2)
             with col_c1:
                 st.subheader("Popular Courses")
                 if data.get("Course") is not None:
-                    df_course = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
-                    fig_course = px.bar(df_course, x="Sign Ups", y="Course", orientation='h')
+                    # Chart: Top 10
+                    df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(10)
+                    fig_course = px.bar(df_course_top, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
                     fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'})
                     st.plotly_chart(fig_course, use_container_width=True)
+                    
+                    # Table: All Values
+                    st.markdown("#### All Courses")
+                    df_course_all = data["Course"].sort_values("Sign Ups", ascending=False)
+                    st.dataframe(df_course_all, use_container_width=True, hide_index=True)
             
             with col_c2:
                 st.subheader("Completion Rates")
                 if data.get("Completion") is not None:
+                    # Chart: All (or filtered if preferred, but usually small list)
                     df_comp = data["Completion"].sort_values("Avg Completion %", ascending=True)
                     fig_comp = px.bar(df_comp, x="Avg Completion %", y="Starter Kit", orientation='h')
                     fig_comp.update_traces(marker=dict(color=df_comp["Avg Completion %"], colorscale=[[0, "#333"], [1, "#ff6600"]]))
                     fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig_comp, use_container_width=True)
+                    
+                    # Table: All Values
+                    st.markdown("#### Detailed Completion Stats")
+                    # Display sorted high-to-low for table readability
+                    st.dataframe(df_comp.sort_values("Avg Completion %", ascending=False), use_container_width=True, hide_index=True)
 
         # TAB 4: QUALITY
         with tab_qual:
