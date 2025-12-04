@@ -54,6 +54,13 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.1);
         color: #ffffff;
     }
+    
+    /* Info Box Styling */
+    .stAlert {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #cccccc;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -145,7 +152,7 @@ if check_password():
     # --- 3. DATA LOADING ---
     @st.cache_data
     def load_data():
-        # KEPT ORIGINAL FILENAME
+        # ORIGINAL FILENAME
         file_path = "final_unified_master_with_segments.xlsx"
         try:
             xls = pd.read_excel(file_path, sheet_name=None)
@@ -235,24 +242,21 @@ if check_password():
 
         # TAB 1: GROWTH
         with tab_growth:
-            # Interactive Header
             st.subheader("Enrollment Trends", help=METRIC_TOOLTIPS["growth_trend"])
             
             if data.get("Monthly_Enroll") is not None and data.get("Monthly_Unique") is not None:
-                # 1. Prepare Data
+                # Data Prep
                 df_enroll = data["Monthly_Enroll"].copy()
                 df_enroll['Month'] = pd.to_datetime(df_enroll['Month'])
                 df_unique = data["Monthly_Unique"].copy()
                 df_unique['Month'] = pd.to_datetime(df_unique['Month'])
                 
-                # Merge into one clean table
                 df_trend = pd.merge(df_enroll, df_unique, on="Month", how="outer").fillna(0)
                 df_trend = df_trend.sort_values("Month")
                 
-                # --- CALCULATION CHANGE: MoM based on UNIQUE USERS now ---
+                # MoM based on UNIQUE USERS
                 df_trend['MoM_Growth'] = df_trend['Unique User Signups'].pct_change() * 100
                 
-                # Labels & Filters
                 df_trend['Month_Label'] = df_trend['Month'].dt.strftime('%b %Y')
                 all_months = df_trend['Month_Label'].unique().tolist()
                 filter_options = ["All Months"] + all_months
@@ -277,24 +281,25 @@ if check_password():
                                                  line=dict(color='#ffffff', dash='dot'))) 
                     fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
                                           height=400, margin=dict(l=0, r=0, t=20, b=0))
-                    # FIX: Force X-Axis to be monthly ticks
                     fig_trend.update_xaxes(dtick="M1", tickformat="%b %Y")
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # MoM Chart with Tooltip Header
-                    st.markdown("#### MoM Growth Rate (%)", help=METRIC_TOOLTIPS["mom_growth"])
+                    # MoM Chart with VISIBLE DEFAULT EXPLANATION
+                    st.markdown("#### MoM Growth Rate (%)")
+                    
+                    # --- CHANGE: Display Tooltip Content by Default ---
+                    st.info(METRIC_TOOLTIPS["mom_growth"]) 
+                    
                     fig_mom = go.Figure()
                     fig_mom.add_trace(go.Bar(
                         x=df_filtered['Month'], 
                         y=df_filtered['MoM_Growth'],
                         marker=dict(color=df_filtered['MoM_Growth'].apply(lambda x: '#00cc96' if x >= 0 else '#ef553b')),
                         name='MoM Growth',
-                        # --- CUSTOM TOOLTIP LOGIC ---
                         customdata=df_filtered['Unique User Signups'],
                         hovertemplate='%{x|%b %Y}<br>Growth: %{y:.2f}%<br>Users: %{customdata:,} <extra></extra>'
                     ))
                     fig_mom.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=300)
-                    # FIX: Force X-Axis to be monthly ticks
                     fig_mom.update_xaxes(dtick="M1", tickformat="%b %Y")
                     st.plotly_chart(fig_mom, use_container_width=True)
 
@@ -354,18 +359,10 @@ if check_password():
             with col_c1:
                 st.subheader("Popular Courses", help=METRIC_TOOLTIPS["popular_courses"])
                 if data.get("Course") is not None:
-                    # --- INCREASED TO TOP 30 ---
                     df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(30)
-                    
                     fig_course = px.bar(df_course_top, x="Sign Ups", y="Course", orientation='h')
                     fig_course.update_traces(marker_color='#ff6600') 
-                    fig_course.update_layout(
-                        template="plotly_dark", 
-                        paper_bgcolor='rgba(0,0,0,0)', 
-                        plot_bgcolor='rgba(0,0,0,0)', 
-                        yaxis={'categoryorder':'total ascending'},
-                        height=800 # Increased height for 30 bars
-                    )
+                    fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis={'categoryorder':'total ascending'}, height=800)
                     st.plotly_chart(fig_course, use_container_width=True)
                     st.markdown("#### All Courses")
                     st.dataframe(data["Course"].sort_values("Sign Ups", ascending=False), use_container_width=True, hide_index=True)
@@ -377,10 +374,7 @@ if check_password():
                     fig_badges = px.line(df_badges, x="Month", y="Number of Badges", markers=True)
                     fig_badges.update_traces(line_color='#ff6600', line_width=3)
                     fig_badges.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
-                    
-                    # --- FIX: FORCE X-AXIS FORMATTING ---
                     fig_badges.update_xaxes(dtick="M1", tickformat="%b %Y")
-                    
                     st.plotly_chart(fig_badges, use_container_width=True)
                     st.markdown("#### Badges Data")
                     st.dataframe(df_badges, use_container_width=True, hide_index=True)
@@ -414,10 +408,7 @@ if check_password():
                     fig_leads = px.line(df_leads, x="Month", y="Number of Leads Gen", markers=True)
                     fig_leads.update_traces(line_color='#ff6600', line_width=3)
                     fig_leads.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=350)
-                    
-                    # --- FIX: FORCE X-AXIS FORMATTING ---
                     fig_leads.update_xaxes(dtick="M1", tickformat="%b %Y")
-                    
                     st.plotly_chart(fig_leads, use_container_width=True)
                     st.markdown("#### Leads Data")
                     st.dataframe(df_leads, use_container_width=True, hide_index=True)
