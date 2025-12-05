@@ -9,8 +9,36 @@ st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 st.markdown("""
 <style>
 /* --------------------------------
-   1. FONTS & GLOBAL RESET
+   0. DESIGN TOKENS & GLOBAL RESET
 -------------------------------- */
+:root {
+    /* Brand & accents */
+    --accent: #FF6600;
+    --accent-soft: rgba(255, 102, 0, 0.24);
+    --accent-soft-strong: rgba(255, 102, 0, 0.4);
+
+    /* Backgrounds */
+    --bg-main: #020617;
+    --bg-main-soft: #030712;
+    --bg-card: #050510;
+    --bg-card-deep: #05050A;
+    --bg-elevated: #0B0F19;
+
+    /* Text */
+    --text-primary: #F9FAFB;
+    --text-muted: #9CA3AF;
+    --text-subtle: #6B7280;
+
+    /* Borders & lines */
+    --border-subtle: rgba(148, 163, 184, 0.45);
+    --border-strong: rgba(15, 23, 42, 0.95);
+
+    /* Shadows */
+    --shadow-deep: 0 26px 70px rgba(0, 0, 0, 1);
+    --shadow-medium: 0 20px 55px rgba(0, 0, 0, 0.9);
+}
+
+/* Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 * {
@@ -19,16 +47,15 @@ st.markdown("""
     box-sizing: border-box;
 }
 
-html, body, [class*="css"] {
+/* Scope typography and smoothing to app */
+.stApp, .stApp * {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 /* --------------------------------
-   2. DYNAMIC ANIMATED BACKGROUND
-   - flowing radial gradients
-   - 25s smooth animation
+   1. RESPONSIVE LAYOUT & CONTAINER
 -------------------------------- */
 .stApp {
     background:
@@ -36,7 +63,7 @@ html, body, [class*="css"] {
         radial-gradient(ellipse at 90% 100%, rgba(255, 102, 0, 0.08), transparent 55%),
         radial-gradient(circle at 50% 50%, rgba(16, 16, 24, 1), #000000);
     background-attachment: fixed;
-    color: #F8FAFC;
+    color: var(--text-primary);
     min-height: 100vh;
     position: relative;
 }
@@ -48,27 +75,27 @@ html, body, [class*="css"] {
     background:
         radial-gradient(circle at 20% 30%, rgba(255, 102, 0, 0.06), transparent 45%),
         radial-gradient(circle at 80% 70%, rgba(255, 102, 0, 0.05), transparent 45%);
-    animation: bgFlow 25s ease-in-out infinite alternate;
+    animation: bgFlow 22s ease-in-out infinite alternate;
     pointer-events: none;
     z-index: 0;
 }
 
 @keyframes bgFlow {
     0% {
-        opacity: 0.4;
+        opacity: 0.35;
         transform: scale(1) translate3d(0, 0, 0);
     }
     50% {
-        opacity: 0.7;
-        transform: scale(1.06) translate3d(12px, -10px, 0);
+        opacity: 0.6;
+        transform: scale(1.04) translate3d(10px, -8px, 0);
     }
     100% {
-        opacity: 0.4;
+        opacity: 0.35;
         transform: scale(1) translate3d(0, 0, 0);
     }
 }
 
-/* Main content container */
+/* Main content container with responsive padding */
 .main .block-container {
     padding: 2.6rem 3rem !important;
     max-width: 1500px !important;
@@ -76,42 +103,63 @@ html, body, [class*="css"] {
     z-index: 1;
 }
 
+/* Section wrapper utility (for future use if you wrap blocks) */
+.section-block {
+    margin-bottom: 2.5rem;
+    padding-bottom: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .main .block-container {
+        padding: 2rem 1.5rem !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .main .block-container {
+        padding: 1.5rem 1rem !important;
+        max-width: 100% !important;
+    }
+}
+
 /* --------------------------------
-   3. PREMIUM TITLE ANIMATION
-   - blur → focus, glow, accents
+   2. TYPOGRAPHY & HIERARCHY
 -------------------------------- */
+/* Title */
 .main h1 {
     position: relative;
     display: inline-block;
-    font-size: 2.4rem !important;
+    font-size: 2.3rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.04em !important;
     margin-bottom: 0.6rem !important;
 
-    background: linear-gradient(135deg, #FFFFFF 0%, #FF6600 100%);
+    background: linear-gradient(135deg, #FFFFFF 0%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 
     opacity: 0;
-    filter: blur(6px);
-    transform: translateY(-10px) scale(0.96);
+    filter: blur(4px);
+    transform: translateY(-8px) scale(0.96);
     text-shadow:
-        0 0 22px rgba(0, 0, 0, 0.9),
-        0 0 28px rgba(255, 102, 0, 0.5);
-    animation: titleReveal 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        0 0 18px rgba(0, 0, 0, 0.9),
+        0 0 22px rgba(255, 102, 0, 0.45);
+    animation: titleReveal 0.85s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 @keyframes titleReveal {
     0% {
         opacity: 0;
         filter: blur(6px);
-        transform: translateY(-10px) scale(0.96);
+        transform: translateY(-10px) scale(0.95);
     }
     60% {
         opacity: 1;
         filter: blur(0px);
-        transform: translateY(2px) scale(1.04);
+        transform: translateY(2px) scale(1.03);
     }
     100% {
         opacity: 1;
@@ -128,11 +176,11 @@ html, body, [class*="css"] {
     top: 22%;
     width: 3px;
     height: 56%;
-    background: linear-gradient(180deg, #FF6600, transparent);
-    box-shadow: 0 0 18px rgba(255, 102, 0, 0.9);
+    background: linear-gradient(180deg, var(--accent), transparent);
+    box-shadow: 0 0 16px rgba(255, 102, 0, 0.85);
     transform-origin: bottom;
     transform: scaleY(0);
-    animation: titleBar 0.7s 0.25s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    animation: titleBar 0.6s 0.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 /* Right underline */
@@ -143,12 +191,12 @@ html, body, [class*="css"] {
     bottom: -10px;
     width: 70px;
     height: 3px;
-    background: linear-gradient(90deg, #FF6600, transparent);
+    background: linear-gradient(90deg, var(--accent), transparent);
     border-radius: 999px;
-    box-shadow: 0 0 18px rgba(255, 102, 0, 0.8);
+    box-shadow: 0 0 14px rgba(255, 102, 0, 0.75);
     transform-origin: left;
     transform: scaleX(0);
-    animation: titleLine 0.6s 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    animation: titleLine 0.55s 0.32s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 @keyframes titleBar {
@@ -161,69 +209,87 @@ html, body, [class*="css"] {
     100% { transform: scaleX(1); }
 }
 
-/* Subtext under title */
-.main p {
-    color: #94A3B8 !important;
-    font-size: 0.94rem !important;
-    line-height: 1.7 !important;
-}
-
 /* Section headings */
 .main h2, .main h3 {
     font-weight: 700 !important;
     letter-spacing: -0.02em !important;
-    color: #F8FAFC !important;
-    margin-top: 2rem !important;
+    color: var(--text-primary) !important;
+    margin-top: 2.1rem !important;
     margin-bottom: 1rem !important;
 }
 
+/* Intro / muted copy utilities */
+.section-intro {
+    color: var(--text-muted) !important;
+    font-size: 0.95rem !important;
+    line-height: 1.7 !important;
+    margin-bottom: 1.4rem !important;
+}
+
+.muted-copy {
+    color: var(--text-subtle) !important;
+    font-size: 0.85rem !important;
+    line-height: 1.6 !important;
+}
+
+/* Keep generic paragraph styling gentle */
+.main p {
+    color: var(--text-muted) !important;
+    font-size: 0.94rem !important;
+    line-height: 1.65 !important;
+}
+
 /* --------------------------------
-   4. NEXT-LEVEL KPI CARDS
-   - glassmorphism
-   - staggered float-in
-   - animated borders
+   3. KPI CARDS (st.metric)
 -------------------------------- */
 div[data-testid="metric-container"] {
-    background: radial-gradient(circle at 0 0,
+    background: radial-gradient(
+        circle at 0 0,
         rgba(31, 31, 45, 0.98),
-        rgba(5, 5, 10, 0.98));
+        rgba(5, 5, 10, 0.98)
+    );
     border-radius: 20px;
-    padding: 1.6rem 1.5rem !important;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 1.5rem 1.4rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-        0 26px 70px rgba(0, 0, 0, 0.98),
-        0 0 0 1px rgba(15, 23, 42, 0.9);
-    backdrop-filter: blur(18px);
+        var(--shadow-deep),
+        0 0 0 1px var(--border-strong);
+    backdrop-filter: blur(14px);
     position: relative;
     overflow: hidden;
 
     opacity: 0;
-    transform: translateY(18px) scale(0.95) rotateX(5deg);
-    animation: metricFloat 0.7s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    transform: translateY(14px) scale(0.95);
+    animation: metricFloat 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    animation-iteration-count: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-/* Stagger animation for 4 KPIs */
-div[data-testid="metric-container"]:nth-of-type(1) { animation-delay: 0.15s; }
-div[data-testid="metric-container"]:nth-of-type(2) { animation-delay: 0.25s; }
-div[data-testid="metric-container"]:nth-of-type(3) { animation-delay: 0.35s; }
-div[data-testid="metric-container"]:nth-of-type(4) { animation-delay: 0.45s; }
+/* Stagger animation for first 4 KPIs */
+div[data-testid="metric-container"]:nth-of-type(1) { animation-delay: 0.12s; }
+div[data-testid="metric-container"]:nth-of-type(2) { animation-delay: 0.18s; }
+div[data-testid="metric-container"]:nth-of-type(3) { animation-delay: 0.24s; }
+div[data-testid="metric-container"]:nth-of-type(4) { animation-delay: 0.30s; }
 
 @keyframes metricFloat {
     0% {
         opacity: 0;
-        transform: translateY(18px) scale(0.93) rotateX(8deg);
+        transform: translateY(16px) scale(0.94);
     }
     65% {
         opacity: 1;
-        transform: translateY(-3px) scale(1.02) rotateX(0deg);
+        transform: translateY(-2px) scale(1.01);
     }
     100% {
         opacity: 1;
-        transform: translateY(0) scale(1) rotateX(0deg);
+        transform: translateY(0) scale(1);
     }
 }
 
-/* Animated gradient border overlay */
+/* Subtle animated border */
 div[data-testid="metric-container"]::before {
     content: "";
     position: absolute;
@@ -232,120 +298,128 @@ div[data-testid="metric-container"]::before {
     padding: 1px;
     background: conic-gradient(
         from 180deg,
-        rgba(255, 102, 0, 0.9),
-        rgba(255, 255, 255, 0.12),
-        rgba(255, 102, 0, 0.4),
-        rgba(255, 102, 0, 0.9)
+        rgba(255, 102, 0, 0.8),
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 102, 0, 0.35),
+        rgba(255, 102, 0, 0.8)
     );
-    -webkit-mask: 
-        linear-gradient(#000 0 0) content-box, 
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    opacity: 0;
+    opacity: 0.05;
     animation: borderSweep 5s linear infinite;
     pointer-events: none;
 }
 
 @keyframes borderSweep {
-    0%   { opacity: 0.08; transform: rotate(0deg); }
-    50%  { opacity: 0.25; transform: rotate(180deg); }
-    100% { opacity: 0.08; transform: rotate(360deg); }
+    0%   { opacity: 0.05; transform: rotate(0deg); }
+    50%  { opacity: 0.18; transform: rotate(180deg); }
+    100% { opacity: 0.05; transform: rotate(360deg); }
 }
 
 /* Diagonal shine on hover */
 div[data-testid="metric-container"]::after {
     content: "";
     position: absolute;
-    top: -140%;
-    left: -60%;
-    width: 220%;
-    height: 220%;
+    top: -150%;
+    left: -70%;
+    width: 230%;
+    height: 230%;
     background: linear-gradient(
         130deg,
         transparent 0%,
-        rgba(255, 255, 255, 0.20) 18%,
-        rgba(255, 255, 255, 0.05) 55%,
+        rgba(255, 255, 255, 0.16) 18%,
+        rgba(255, 255, 255, 0.03) 55%,
         transparent 100%
     );
     opacity: 0;
-    transform: translate3d(-15%, 0, 0);
-    transition: opacity 0.6s ease-out, transform 0.8s ease-out;
+    transform: translate3d(-18%, 0, 0);
+    transition: opacity 0.5s ease-out, transform 0.7s ease-out;
     pointer-events: none;
 }
 
 div[data-testid="metric-container"]:hover::after {
     opacity: 1;
-    transform: translate3d(8%, 0, 0);
+    transform: translate3d(5%, 0, 0);
 }
 
 /* 3D hover lift */
 div[data-testid="metric-container"]:hover {
-    transform: translateY(-4px) scale(1.02) rotateX(0deg);
-    border-color: rgba(255, 102, 0, 0.7);
+    transform: translateY(-3px) scale(1.01);
+    border-color: rgba(255, 102, 0, 0.65);
     box-shadow:
-        0 32px 80px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(255, 102, 0, 0.65);
+        0 30px 80px rgba(0, 0, 0, 1),
+        0 0 0 1px rgba(255, 102, 0, 0.6);
 }
 
-/* Metric label & value */
+/* Metric label */
 div[data-testid="stMetricLabel"] {
     font-size: 0.76rem !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.14em !important;
-    color: #9CA3AF !important;
+    color: var(--text-subtle) !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.25rem !important;
 }
 
+/* Metric value */
 div[data-testid="stMetricValue"] {
-    font-size: 2.1rem !important;
+    font-size: 2.05rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.03em !important;
-    background: linear-gradient(135deg, #FFFFFF 0%, #FF6600 100%);
+    background: linear-gradient(135deg, #FFFFFF 0%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-        0 0 18px rgba(255, 102, 0, 0.6),
-        0 0 30px rgba(0, 0, 0, 1);
-    animation: valuePulse 3s ease-in-out infinite;
+        0 0 10px rgba(255, 102, 0, 0.5),
+        0 0 18px rgba(0, 0, 0, 1);
+    animation: valuePulse 4s ease-in-out infinite;
 }
 
 @keyframes valuePulse {
-    0%   { text-shadow: 0 0 14px rgba(255, 102, 0, 0.6); }
-    50%  { text-shadow: 0 0 26px rgba(255, 102, 0, 0.9); }
-    100% { text-shadow: 0 0 14px rgba(255, 102, 0, 0.6); }
+    0%   { text-shadow: 0 0 8px rgba(255, 102, 0, 0.5); }
+    50%  { text-shadow: 0 0 18px rgba(255, 102, 0, 0.8); }
+    100% { text-shadow: 0 0 8px rgba(255, 102, 0, 0.5); }
 }
 
+/* Metric delta */
 div[data-testid="stMetricDelta"] {
     font-size: 0.78rem !important;
     color: #A5B4FC !important;
 }
 
 /* --------------------------------
-   5. FUTURISTIC TABS
+   4. FUTURISTIC TABS (NAV)
 -------------------------------- */
 .stTabs [data-baseweb="tab-list"] {
     width: 100%;
     gap: 0.6rem;
-    background: rgba(7, 7, 12, 0.85);
+    background: rgba(7, 7, 12, 0.9);
     padding: 0.55rem;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.9);
+    box-shadow: var(--shadow-medium);
+    position: sticky;
+    top: 0.75rem;
+    z-index: 9;
+    backdrop-filter: blur(10px);
 }
 
 .stTabs [data-baseweb="tab"] {
     flex-grow: 1;
     height: 48px;
-    padding: 0 1.4rem;
+    padding: 0 1.3rem;
     border-radius: 10px;
     border: none;
     background: transparent;
-    color: #9CA3AF;
+    color: var(--text-muted);
     font-weight: 600;
     font-size: 0.78rem;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
 
     position: relative;
@@ -365,7 +439,7 @@ div[data-testid="stMetricDelta"] {
     position: absolute;
     inset: -40%;
     background: radial-gradient(circle at 20% 0,
-        rgba(255, 102, 0, 0.23),
+        rgba(255, 102, 0, 0.20),
         transparent 65%);
     opacity: 0;
     transform: scale(0.75);
@@ -374,7 +448,7 @@ div[data-testid="stMetricDelta"] {
 }
 
 .stTabs [data-baseweb="tab"]:hover::before {
-    opacity: 0.7;
+    opacity: 0.65;
     transform: scale(1);
 }
 
@@ -389,57 +463,69 @@ div[data-testid="stMetricDelta"] {
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     background: linear-gradient(
         135deg,
-        rgba(255, 102, 0, 0.28),
+        rgba(255, 102, 0, 0.26),
         rgba(0, 0, 0, 1)
     );
-    color: #FF6600;
+    color: var(--accent);
     box-shadow:
         0 20px 55px rgba(0, 0, 0, 1),
         0 0 0 1px rgba(255, 102, 0, 0.9);
     transform: translateY(-1px) scale(1.01);
+    font-weight: 700;
 }
 
-/* Pulsing bottom line */
+/* Active tab bottom line pulse + icon */
 .stTabs [data-baseweb="tab"][aria-selected="true"]::after {
-    content: "";
+    content: "●";
     position: absolute;
-    left: 16%;
-    right: 16%;
-    bottom: -3px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #FF6600, transparent);
-    box-shadow: 0 0 16px rgba(255, 102, 0, 0.9);
-    animation: tabPulse 1.4s ease-in-out infinite alternate;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -5px;
+    font-size: 0.45rem;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(255, 102, 0, 0.9);
+    animation: tabPulse 1.6s ease-in-out infinite alternate;
 }
 
 @keyframes tabPulse {
-    0%   { opacity: 0.5; transform: scaleX(0.93); }
-    100% { opacity: 1;   transform: scaleX(1.05); }
+    0%   { opacity: 0.6; transform: translateX(-50%) scale(0.9); }
+    100% { opacity: 1;   transform: translateX(-50%) scale(1.1); }
+}
+
+/* Mobile-friendly tabs */
+@media (max-width: 768px) {
+    .stTabs [data-baseweb="tab"] {
+        height: 40px;
+        padding: 0 0.6rem;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+    }
 }
 
 /* --------------------------------
-   6. ENHANCED INFO BOXES (st.info)
+   5. ENHANCED INFO BOXES (.stAlert)
 -------------------------------- */
 .stAlert {
     background: radial-gradient(circle at 0 0,
-        rgba(15, 23, 42, 1),
-        rgba(0, 0, 0, 1));
+        var(--bg-elevated),
+        #000000);
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.5);
+    border: 1px solid var(--border-subtle);
     color: #E5E7EB;
     padding: 1rem 1.1rem !important;
     font-size: 0.86rem !important;
     line-height: 1.6;
     position: relative;
     overflow: hidden;
+    margin: 0.75rem 0 1.2rem 0;
 
     box-shadow:
         0 22px 65px rgba(0, 0, 0, 0.98),
-        0 0 0 1px rgba(15, 23, 42, 0.95);
+        0 0 0 1px var(--border-strong);
 
-    transform: translateX(-10px);
+    transform: translateX(-8px);
     opacity: 0;
-    animation: infoSlide 0.45s ease-out forwards;
+    animation: infoSlide 0.4s ease-out forwards;
 }
 
 @keyframes infoSlide {
@@ -447,7 +533,7 @@ div[data-testid="stMetricDelta"] {
     100% { opacity: 1; transform: translateX(0); }
 }
 
-/* Pulsing orange left bar */
+/* Pulsing orange left bar (info) */
 .stAlert::before {
     content: "";
     position: absolute;
@@ -457,16 +543,16 @@ div[data-testid="stMetricDelta"] {
     width: 4px;
     background: linear-gradient(
         180deg,
-        #FF6600,
+        var(--accent),
         rgba(255, 102, 0, 0.05),
-        #FF6600
+        var(--accent)
     );
-    box-shadow: 0 0 18px rgba(255, 102, 0, 0.9);
+    box-shadow: 0 0 16px rgba(255, 102, 0, 0.9);
     animation: borderGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes borderGlow {
-    0%   { opacity: 0.6; }
+    0%   { opacity: 0.55; }
     100% { opacity: 1; }
 }
 
@@ -479,27 +565,26 @@ div[data-testid="stMetricDelta"] {
     width: 45%;
     height: 45%;
     background: radial-gradient(circle,
-        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.07),
         transparent 75%);
-    opacity: 0.7;
+    opacity: 0.6;
     filter: blur(2px);
 }
 
 /* --------------------------------
-   7. CHART CONTAINERS (Plotly)
-   - glow, lift, frosted glass
+   6. CHART CONTAINERS (Plotly)
 -------------------------------- */
 div[data-testid="stPlotlyChart"] {
     background: radial-gradient(circle at 0 0,
         rgba(20, 20, 30, 0.98),
         rgba(5, 5, 10, 0.98));
     border-radius: 20px;
-    padding: 1.3rem 1.3rem 1.0rem 1.3rem;
+    padding: 1.3rem 1.3rem 1rem 1.3rem;
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-        0 26px 75px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(18px);
+        var(--shadow-deep),
+        0 0 0 1px var(--border-strong);
+    backdrop-filter: blur(12px);
 
     position: relative;
     overflow: hidden;
@@ -515,16 +600,16 @@ div[data-testid="stPlotlyChart"]::before {
     position: absolute;
     inset: -20%;
     background: radial-gradient(circle at 0 0,
-        rgba(255, 102, 0, 0.24),
+        var(--accent-soft),
         transparent 65%);
-    opacity: 0.3;
+    opacity: 0.22;
     mix-blend-mode: screen;
     pointer-events: none;
     transition: opacity 0.25s ease-out, transform 0.25s ease-out;
 }
 
 div[data-testid="stPlotlyChart"]:hover::before {
-    opacity: 0.55;
+    opacity: 0.4;
     transform: scale(1.03);
 }
 
@@ -538,24 +623,25 @@ div[data-testid="stPlotlyChart"]:hover {
 }
 
 /* --------------------------------
-   8. PREMIUM DATA TABLES
+   7. PREMIUM DATA TABLES
 -------------------------------- */
 .stDataFrame {
     border-radius: 18px !important;
     overflow: hidden !important;
     box-shadow:
         0 24px 70px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(15, 23, 42, 0.95) !important;
+        0 0 0 1px var(--border-strong) !important;
 }
 
+/* Table core */
 .stDataFrame table {
     border-collapse: collapse !important;
-    background-color: #020617 !important;
+    background-color: var(--bg-main) !important;
     border: 1px solid rgba(31, 41, 55, 0.9) !important;
 }
 
 /* Headers */
-.stDataFrame th {
+.stDataFrame thead th {
     background: linear-gradient(
         135deg,
         rgba(15, 23, 42, 1),
@@ -568,31 +654,64 @@ div[data-testid="stPlotlyChart"]:hover {
     letter-spacing: 0.16em !important;
     padding: 0.85rem 1rem !important;
     border-bottom: 1px solid rgba(55, 65, 81, 0.95) !important;
-    border-top: 1px solid rgba(255, 102, 0, 0.4) !important;
+    border-top: 1px solid var(--accent-soft-strong) !important;
+
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 /* Cells */
-.stDataFrame td {
-    color: #CBD5E1 !important;
+.stDataFrame tbody td {
+    color: #E5E7EB !important;
     padding: 0.75rem 1rem !important;
     font-size: 0.82rem !important;
-    border-bottom: 1px solid rgba(31, 41, 55, 0.9) !important;
+    border-bottom: 1px solid rgba(31, 41, 55, 0.85) !important;
 }
 
-/* Zebra striping */
+/* Zebra striping (softened contrast) */
 .stDataFrame tbody tr:nth-child(even) {
-    background-color: #020617 !important;
+    background-color: var(--bg-main-soft) !important;
 }
 .stDataFrame tbody tr:nth-child(odd) {
-    background-color: #030712 !important;
+    background-color: #040712 !important;
 }
 
-/* Row hover: orange side + gentle highlight */
-.stDataFrame tbody tr:hover td {
+/* Row hover: orange side + gentle highlight + focusable */
+.stDataFrame tbody tr:hover td,
+.stDataFrame tbody tr:focus-within td {
     background: linear-gradient(90deg,
         rgba(255, 102, 0, 0.12),
         rgba(15, 23, 42, 0.98)) !important;
-    border-left: 2px solid #FF6600 !important;
+    border-left: 2px solid var(--accent) !important;
+}
+
+/* --------------------------------
+   8. FILTERS & FORM CONTROLS
+-------------------------------- */
+/* Multiselect / select box styling */
+div[data-baseweb="select"] {
+    background-color: rgba(15, 23, 42, 0.95) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(148, 163, 184, 0.5) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Label style for filters */
+.stMultiSelect label,
+.stSelectbox label {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: var(--text-muted) !important;
+}
+
+/* Focus state */
+div[data-baseweb="select"]:focus-within {
+    border-color: var(--accent) !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 102, 0, 0.7),
+        0 18px 40px rgba(0, 0, 0, 0.95) !important;
 }
 
 /* --------------------------------
@@ -608,17 +727,18 @@ div[data-testid="stPlotlyChart"]:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #FF6600, #7C2D12);
+    background: linear-gradient(180deg, var(--accent), #7C2D12);
     border-radius: 999px;
     box-shadow: 0 0 10px rgba(255, 102, 0, 0.7);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #FF6600, #EA580C);
+    background: linear-gradient(180deg, var(--accent), #EA580C);
     box-shadow:
         0 0 14px rgba(255, 102, 0, 0.9),
         0 0 22px rgba(0, 0, 0, 0.9);
 }
+
 </style>
 """, unsafe_allow_html=True)
 
