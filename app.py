@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 # --- 1. PAGE CONFIGURATION & THEME ---
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# CSS: Import Google Fonts (Lato), Black Background, & Styling
 st.markdown("""
 <style>
     /* --------------------------------
@@ -19,40 +18,83 @@ st.markdown("""
     }
 
     /* --------------------------------
-       2. GLOBAL THEME & LAYOUT
+       2. GLOBAL THEME & BACKGROUND
     -------------------------------- */
     .stApp {
-        /* Keep pure black as base, add subtle vignette for depth */
         background:
             radial-gradient(circle at 0% 0%, #181818 0, #000000 45%),
-            radial-gradient(circle at 100% 100%, #141414 0, #000000 45%);
+            radial-gradient(circle at 100% 100%, #121212 0, #000000 50%);
         color: #fafafa;
+        animation: bgPulse 18s ease-in-out infinite alternate;
     }
 
-    /* Widen main container & add breathing room */
+    @keyframes bgPulse {
+        0% {
+            background-position: 0% 0%, 100% 100%;
+        }
+        50% {
+            background-position: 20% 0%, 80% 100%;
+        }
+        100% {
+            background-position: 40% 10%, 60% 90%;
+        }
+    }
+
     .main .block-container {
-        padding-top: 2.5rem !important;
-        padding-bottom: 2.5rem !important;
-        max-width: 1300px !important;
+        padding-top: 2.8rem !important;
+        padding-bottom: 2.8rem !important;
+        max-width: 1320px !important;
     }
 
-    /* Headings – sharper, more "dashboard" feel */
+    /* --------------------------------
+       3. TITLES & HEADINGS
+    -------------------------------- */
     .main h1 {
-        font-weight: 700 !important;
-        letter-spacing: 0.18em !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.22em !important;
         text-transform: uppercase !important;
-        font-size: 1.2rem !important;
-        color: #e5e7eb !important;
+        font-size: 1.3rem !important;
+        color: #f9fafb !important;
+        text-shadow: 0 0 22px rgba(0, 0, 0, 0.9);
+        position: relative;
+        display: inline-block;
+        padding-right: 60px;
         opacity: 0;
-        animation: fadeDown 0.6s ease-out forwards;
+        transform: translateY(-8px);
+        animation: titleDrop 0.7s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+
+    .main h1::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        width: 48px;
+        height: 2px;
+        background: linear-gradient(90deg, #ff6600, transparent);
+        transform: translateY(-50%) scaleX(0);
+        transform-origin: left;
+        animation: titleUnderline 0.7s 0.25s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+
+    @keyframes titleDrop {
+        0% { opacity: 0; transform: translateY(-8px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes titleUnderline {
+        0% { transform: translateY(-50%) scaleX(0); }
+        100% { transform: translateY(-50%) scaleX(1); }
     }
 
     .main h2, .main h3 {
-        font-weight: 600 !important;
-        letter-spacing: 0.06em !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.12em !important;
         text-transform: uppercase;
         font-size: 0.9rem !important;
-        color: #d1d5db !important;
+        color: #e5e7eb !important;
+        margin-top: 1.4rem !important;
+        margin-bottom: 0.6rem !important;
     }
 
     .main p {
@@ -60,72 +102,106 @@ st.markdown("""
     }
 
     /* --------------------------------
-       3. KPI METRICS – GLASS CARDS
+       4. KPI METRIC CARDS – BOLD & ANIMATED
     -------------------------------- */
     div[data-testid="metric-container"] {
-        background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.04),
-            rgba(255, 102, 0, 0.05)
-        );
-        border-radius: 18px;
-        padding: 1.1rem 1.4rem !important;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: radial-gradient(circle at 0 0,
+            rgba(255, 255, 255, 0.06),
+            rgba(0, 0, 0, 0.98));
+        border-radius: 20px;
+        padding: 1.2rem 1.5rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow:
-            0 18px 45px rgba(0, 0, 0, 0.85),
-            0 0 0 1px rgba(15, 23, 42, 0.5);
-        backdrop-filter: blur(10px);
-        transition:
-            transform 0.18s ease-out,
-            box-shadow 0.18s ease-out,
-            border-color 0.18s ease-out,
-            background 0.18s ease-out;
+            0 24px 60px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(14px);
         position: relative;
         overflow: hidden;
+        transform: translateY(6px) scale(0.98);
+        opacity: 0;
+        animation: metricRise 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards;
     }
 
-    /* Subtle animated highlight sweep */
+    /* Staggered animation by order */
+    div[data-testid="metric-container"]:nth-of-type(1) { animation-delay: 0.15s; }
+    div[data-testid="metric-container"]:nth-of-type(2) { animation-delay: 0.25s; }
+    div[data-testid="metric-container"]:nth-of-type(3) { animation-delay: 0.35s; }
+    div[data-testid="metric-container"]:nth-of-type(4) { animation-delay: 0.45s; }
+
+    @keyframes metricRise {
+        0% {
+            opacity: 0;
+            transform: translateY(6px) scale(0.96);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Animated diagonal sheen */
     div[data-testid="metric-container"]::before {
         content: "";
         position: absolute;
-        inset: -20%;
-        background: radial-gradient(circle at 0 0,
-            rgba(255, 255, 255, 0.09),
-            transparent 55%);
+        top: -120%;
+        left: -50%;
+        width: 220%;
+        height: 220%;
+        background: linear-gradient(
+            130deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.12) 20%,
+            rgba(255, 255, 255, 0.02) 60%,
+            transparent 100%
+        );
         opacity: 0;
-        transform: translate3d(-20%, -20%, 0);
-        transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+        transform: translate3d(-20%, 0, 0);
+        transition: opacity 0.4s ease-out, transform 0.6s ease-out;
         pointer-events: none;
     }
 
     div[data-testid="metric-container"]:hover::before {
         opacity: 1;
-        transform: translate3d(0, 0, 0);
+        transform: translate3d(8%, 0, 0);
     }
 
     div[data-testid="metric-container"]:hover {
-        transform: translateY(-3px);
+        transform: translateY(-3px) scale(1.01);
         box-shadow:
-            0 26px 65px rgba(0, 0, 0, 0.95),
-            0 0 0 1px rgba(255, 102, 0, 0.5);
-        border-color: rgba(255, 102, 0, 0.8);
-        background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.06),
-            rgba(255, 102, 0, 0.08)
-        );
+            0 26px 70px rgba(0, 0, 0, 1),
+            0 0 0 1px rgba(255, 102, 0, 0.7);
+        border-color: rgba(255, 102, 0, 0.9);
+    }
+
+    div[data-testid="metric-container"]::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        border: 1px solid rgba(255, 102, 0, 0.25);
+        opacity: 0;
+        box-shadow: 0 0 40px rgba(255, 102, 0, 0.3);
+        transition: opacity 0.35s ease-out;
+    }
+
+    div[data-testid="metric-container"]:hover::after {
+        opacity: 1;
     }
 
     div[data-testid="stMetricLabel"] {
         color: #e5e7eb !important;
         font-size: 0.78rem !important;
         text-transform: uppercase;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.18em;
         opacity: 0.9;
     }
 
     div[data-testid="stMetricValue"] {
-        color: #ff6600 !important; /* preserve brand orange */
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
+        color: #ff6600 !important; /* brand orange intact */
+        font-size: 2.0rem !important;
+        font-weight: 800 !important;
+        text-shadow: 0 0 20px rgba(255, 102, 0, 0.25);
     }
 
     div[data-testid="stMetricDelta"] {
@@ -134,76 +210,116 @@ st.markdown("""
     }
 
     /* --------------------------------
-       4. TABS – FULL-WIDTH, LIFT & GLOW
+       5. TABS – BOLDER, GLOWING, ANIMATED
     -------------------------------- */
     .stTabs [data-baseweb="tab-list"] {
         width: 100%;
         gap: 8px;
-        border-bottom: 1px solid rgba(31, 41, 55, 0.9);
-        margin-bottom: 0.5rem;
+        border-bottom: none;
+        margin-bottom: 0.8rem;
+        position: relative;
     }
 
     .stTabs [data-baseweb="tab"] {
         flex-grow: 1;
         text-align: center;
-        height: 48px;
+        height: 50px;
         background: radial-gradient(circle at 0 0,
-            rgba(255, 255, 255, 0.04),
-            rgba(15, 23, 42, 0.9));
-        border-radius: 10px 10px 0 0;
+            rgba(31, 41, 55, 1),
+            rgba(3, 7, 18, 1));
+        border-radius: 14px;
         color: #9CA3AF;
-        border: none;
+        border: 1px solid rgba(31, 41, 55, 0.95);
         font-weight: 600;
-        font-size: 0.8rem;
-        letter-spacing: 0.12em;
+        font-size: 0.78rem;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
         transition:
-            color 0.18s ease-out,
-            background 0.18s ease-out,
-            transform 0.18s ease-out,
-            box-shadow 0.18s ease-out;
+            color 0.16s ease-out,
+            background 0.16s ease-out,
+            transform 0.16s ease-out,
+            box-shadow 0.16s ease-out,
+            border-color 0.16s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stTabs [data-baseweb="tab"]::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 0 0,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%);
+        opacity: 0;
+        transform: translate3d(-20%, -20%, 0);
+        transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+        pointer-events: none;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover::before {
+        opacity: 0.6;
+        transform: translate3d(0, 0, 0);
     }
 
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(
-            135deg,
-            rgba(255, 102, 0, 0.18),
-            rgba(17, 24, 39, 0.95)
-        );
+        background: radial-gradient(circle at 10% 0,
+            rgba(255, 102, 0, 0.3),
+            rgba(0, 0, 0, 1));
         color: #ff6600;
         box-shadow:
-            0 10px 30px rgba(0, 0, 0, 0.85),
-            0 -1px 0 rgba(255, 102, 0, 0.8);
-        transform: translateY(1px);
-        border-bottom: 3px solid #ff6600;
+            0 18px 40px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(255, 102, 0, 0.9);
+        transform: translateY(-1px) scale(1.01);
+        border-color: rgba(255, 102, 0, 0.9);
+    }
+
+    .stTabs [data-baseweb="tab"][aria-selected="true"]::after {
+        content: "";
+        position: absolute;
+        left: 20%;
+        right: 20%;
+        bottom: -2px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #ff6600, transparent);
+        box-shadow: 0 0 18px rgba(255, 102, 0, 0.8);
+        animation: tabGlow 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes tabGlow {
+        0% { opacity: 0.5; transform: scaleX(0.95); }
+        100% { opacity: 1; transform: scaleX(1); }
     }
 
     .stTabs [data-baseweb="tab"]:hover {
         background: radial-gradient(circle at 50% 0,
-            rgba(148, 163, 184, 0.2),
-            rgba(15, 23, 42, 0.95));
+            rgba(148, 163, 184, 0.3),
+            rgba(3, 7, 18, 1));
         color: #ffffff;
         transform: translateY(-1px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+        border-color: rgba(148, 163, 184, 0.7);
     }
 
     /* --------------------------------
-       5. INFO BOX (st.info) – NEAT PANELS
+       6. INFO BOX (st.info) – EMPHATIC PANELS
     -------------------------------- */
     .stAlert {
         background: radial-gradient(circle at 0 0,
-            rgba(15, 23, 42, 0.95),
-            rgba(0, 0, 0, 0.98));
-        border-radius: 14px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
+            rgba(15, 23, 42, 1),
+            rgba(0, 0, 0, 1));
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
         color: #d1d5db;
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9);
-        padding: 0.9rem 1rem !important;
+        box-shadow:
+            0 20px 55px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(15, 23, 42, 0.9);
+        padding: 0.95rem 1.1rem !important;
         font-size: 0.86rem !important;
-        line-height: 1.5;
+        line-height: 1.55;
         position: relative;
         overflow: hidden;
-        animation: fadeIn 0.4s ease-out;
+        animation: infoReveal 0.5s ease-out;
     }
 
     .stAlert::before {
@@ -212,83 +328,126 @@ st.markdown("""
         left: 0;
         top: 0;
         bottom: 0;
-        width: 3px;
+        width: 4px;
         background: linear-gradient(
             180deg,
             #ff6600,
-            rgba(255, 102, 0, 0.1)
+            rgba(255, 102, 0, 0.15)
         );
+        box-shadow: 0 0 18px rgba(255, 102, 0, 0.8);
+    }
+
+    .stAlert::after {
+        content: "";
+        position: absolute;
+        right: -40%;
+        top: -40%;
+        width: 60%;
+        height: 60%;
+        background: radial-gradient(circle,
+            rgba(255, 255, 255, 0.06),
+            transparent 70%);
+        opacity: 0.4;
+    }
+
+    @keyframes infoReveal {
+        0% { opacity: 0; transform: translateY(4px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
 
     .stAlert code {
-        background-color: rgba(15, 23, 42, 0.8);
+        background-color: rgba(15, 23, 42, 0.9);
         padding: 0.15rem 0.35rem;
         border-radius: 4px;
         color: #fde68a;
     }
 
     /* --------------------------------
-       6. MULTISELECT & INPUTS
+       7. MULTISELECT & TEXT INPUTS
     -------------------------------- */
     .stMultiSelect [data-baseweb="tag"] {
         background-color: #333333 !important;
         color: #ffa500 !important;
         border-radius: 999px;
-        border: 1px solid rgba(156, 163, 175, 0.6);
+        border: 1px solid rgba(156, 163, 175, 0.9);
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.7);
     }
 
     .stMultiSelect [data-baseweb="select"] > div {
-        background: rgba(15, 23, 42, 0.9) !important;
+        background: rgba(15, 23, 42, 0.95) !important;
         border-radius: 999px !important;
-        border: 1px solid rgba(55, 65, 81, 0.9) !important;
+        border: 1px solid rgba(55, 65, 81, 0.95) !important;
     }
 
     .stMultiSelect input {
         color: #e5e7eb !important;
     }
 
-    /* Generic text inputs */
     input, textarea {
-        background-color: rgba(15, 23, 42, 0.9) !important;
+        background-color: rgba(15, 23, 42, 0.95) !important;
         border-radius: 10px !important;
-        border: 1px solid rgba(55, 65, 81, 0.9) !important;
+        border: 1px solid rgba(55, 65, 81, 0.95) !important;
         color: #f9fafb !important;
+        box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    input:focus, textarea:focus {
+        outline: none !important;
+        border-color: #ff6600 !important;
+        box-shadow:
+            0 0 0 1px rgba(255, 102, 0, 0.7),
+            0 0 18px rgba(255, 102, 0, 0.5);
     }
 
     /* --------------------------------
-       7. CHART & TABLE WRAPPERS
+       8. PLOTLY CHART WRAPPERS – HERO CARDS
     -------------------------------- */
-    /* Plotly charts get card treatment */
     div[data-testid="stPlotlyChart"] {
         background: radial-gradient(circle at 0 0,
-            rgba(15, 23, 42, 0.96),
+            rgba(15, 23, 42, 1),
             rgba(0, 0, 0, 1));
-        border-radius: 18px;
-        padding: 1.1rem 1.1rem 0.8rem 1.1rem;
-        border: 1px solid rgba(31, 41, 55, 0.85);
+        border-radius: 20px;
+        padding: 1.1rem 1.2rem 0.9rem 1.2rem;
+        border: 1px solid rgba(31, 41, 55, 0.95);
         box-shadow:
-            0 20px 50px rgba(0, 0, 0, 0.95),
+            0 26px 70px rgba(0, 0, 0, 1),
             0 0 0 1px rgba(15, 23, 42, 0.9);
         transition:
             transform 0.18s ease-out,
             box-shadow 0.18s ease-out,
             border-color 0.18s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    div[data-testid="stPlotlyChart"]::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        background: radial-gradient(circle at 0 0,
+            rgba(255, 102, 0, 0.22),
+            transparent 60%);
+        opacity: 0.18;
+        mix-blend-mode: screen;
+        pointer-events: none;
     }
 
     div[data-testid="stPlotlyChart"]:hover {
         transform: translateY(-2px);
         box-shadow:
-            0 26px 70px rgba(0, 0, 0, 1),
-            0 0 0 1px rgba(255, 102, 0, 0.45);
-        border-color: rgba(255, 102, 0, 0.7);
+            0 30px 80px rgba(0, 0, 0, 1),
+            0 0 0 1px rgba(255, 102, 0, 0.5);
+        border-color: rgba(255, 102, 0, 0.8);
     }
 
-    /* DataFrames: dark grid with subtle separation */
+    /* --------------------------------
+       9. DATAFRAME STYLING
+    -------------------------------- */
     .stDataFrame {
-        border-radius: 14px !important;
+        border-radius: 16px !important;
         overflow: hidden !important;
         box-shadow:
-            0 18px 45px rgba(0, 0, 0, 0.95),
+            0 20px 60px rgba(0, 0, 0, 1),
             0 0 0 1px rgba(15, 23, 42, 0.9);
     }
 
@@ -312,24 +471,24 @@ st.markdown("""
             rgba(3, 7, 18, 1)
         ) !important;
         color: #e5e7eb !important;
-        border-bottom: 1px solid rgba(55, 65, 81, 0.9) !important;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.95) !important;
         text-transform: uppercase;
         font-size: 0.72rem !important;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
     }
 
     .stDataFrame td {
-        border-bottom: 1px solid rgba(31, 41, 55, 0.85) !important;
+        border-bottom: 1px solid rgba(31, 41, 55, 0.95) !important;
         color: #d1d5db !important;
         font-size: 0.8rem !important;
     }
 
     .stDataFrame tbody tr:hover td {
-        background-color: rgba(15, 23, 42, 0.95) !important;
+        background-color: rgba(15, 23, 42, 0.97) !important;
     }
 
     /* --------------------------------
-       8. SCROLLBARS (Subtle, Dark)
+       10. SCROLLBARS
     -------------------------------- */
     ::-webkit-scrollbar {
         width: 8px;
@@ -347,31 +506,6 @@ st.markdown("""
 
     ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #4b5563, #111827);
-    }
-
-    /* --------------------------------
-       9. BASIC ANIMATIONS
-    -------------------------------- */
-    @keyframes fadeDown {
-        0% {
-            opacity: 0;
-            transform: translateY(-6px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes fadeIn {
-        0% {
-            opacity: 0;
-            transform: translateY(4px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
     }
 </style>
 """, unsafe_allow_html=True)
