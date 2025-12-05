@@ -9,57 +9,369 @@ st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 # CSS: Import Google Fonts (Lato), Black Background, & Styling
 st.markdown("""
 <style>
-    /* --- FONTS --- */
+    /* --------------------------------
+       1. FONTS
+    -------------------------------- */
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
+
     html, body, [class*="css"] {
         font-family: 'Lato', sans-serif !important;
     }
 
-    /* --- GLOBAL THEME --- */
+    /* --------------------------------
+       2. GLOBAL THEME & LAYOUT
+    -------------------------------- */
     .stApp {
-        background-color: #000000;
+        /* Keep pure black as base, add subtle vignette for depth */
+        background:
+            radial-gradient(circle at 0% 0%, #181818 0, #000000 45%),
+            radial-gradient(circle at 100% 100%, #141414 0, #000000 45%);
         color: #fafafa;
     }
-    
+
+    /* Widen main container & add breathing room */
+    .main .block-container {
+        padding-top: 2.5rem !important;
+        padding-bottom: 2.5rem !important;
+        max-width: 1300px !important;
+    }
+
+    /* Headings – sharper, more "dashboard" feel */
+    .main h1 {
+        font-weight: 700 !important;
+        letter-spacing: 0.18em !important;
+        text-transform: uppercase !important;
+        font-size: 1.2rem !important;
+        color: #e5e7eb !important;
+        opacity: 0;
+        animation: fadeDown 0.6s ease-out forwards;
+    }
+
+    .main h2, .main h3 {
+        font-weight: 600 !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase;
+        font-size: 0.9rem !important;
+        color: #d1d5db !important;
+    }
+
+    .main p {
+        color: #9ca3af !important;
+    }
+
+    /* --------------------------------
+       3. KPI METRICS – GLASS CARDS
+    -------------------------------- */
+    div[data-testid="metric-container"] {
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.04),
+            rgba(255, 102, 0, 0.05)
+        );
+        border-radius: 18px;
+        padding: 1.1rem 1.4rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.85),
+            0 0 0 1px rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(10px);
+        transition:
+            transform 0.18s ease-out,
+            box-shadow 0.18s ease-out,
+            border-color 0.18s ease-out,
+            background 0.18s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Subtle animated highlight sweep */
+    div[data-testid="metric-container"]::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        background: radial-gradient(circle at 0 0,
+            rgba(255, 255, 255, 0.09),
+            transparent 55%);
+        opacity: 0;
+        transform: translate3d(-20%, -20%, 0);
+        transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+        pointer-events: none;
+    }
+
+    div[data-testid="metric-container"]:hover::before {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-3px);
+        box-shadow:
+            0 26px 65px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(255, 102, 0, 0.5);
+        border-color: rgba(255, 102, 0, 0.8);
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.06),
+            rgba(255, 102, 0, 0.08)
+        );
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #e5e7eb !important;
+        font-size: 0.78rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        opacity: 0.9;
+    }
+
     div[data-testid="stMetricValue"] {
-        color: #ff6600 !important;
+        color: #ff6600 !important; /* preserve brand orange */
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
     }
 
-    .stMultiSelect [data-baseweb="tag"] {
-        background-color: #333333 !important;
-        color: #ffa500 !important;
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.8rem !important;
+        color: #a5b4fc !important;
     }
 
-    /* --- TAB STYLING --- */
+    /* --------------------------------
+       4. TABS – FULL-WIDTH, LIFT & GLOW
+    -------------------------------- */
     .stTabs [data-baseweb="tab-list"] {
         width: 100%;
         gap: 8px;
+        border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+        margin-bottom: 0.5rem;
     }
+
     .stTabs [data-baseweb="tab"] {
         flex-grow: 1;
         text-align: center;
-        height: 50px;
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 5px 5px 0 0;
+        height: 48px;
+        background: radial-gradient(circle at 0 0,
+            rgba(255, 255, 255, 0.04),
+            rgba(15, 23, 42, 0.9));
+        border-radius: 10px 10px 0 0;
         color: #9CA3AF;
         border: none;
         font-weight: 600;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        transition:
+            color 0.18s ease-out,
+            background 0.18s ease-out,
+            transform 0.18s ease-out,
+            box-shadow 0.18s ease-out;
     }
+
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(255, 102, 0, 0.15);
+        background: linear-gradient(
+            135deg,
+            rgba(255, 102, 0, 0.18),
+            rgba(17, 24, 39, 0.95)
+        );
         color: #ff6600;
+        box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.85),
+            0 -1px 0 rgba(255, 102, 0, 0.8);
+        transform: translateY(1px);
         border-bottom: 3px solid #ff6600;
     }
+
     .stTabs [data-baseweb="tab"]:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background: radial-gradient(circle at 50% 0,
+            rgba(148, 163, 184, 0.2),
+            rgba(15, 23, 42, 0.95));
         color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     }
-    
-    /* --- INFO BOX STYLING (Customizing st.info) --- */
+
+    /* --------------------------------
+       5. INFO BOX (st.info) – NEAT PANELS
+    -------------------------------- */
     .stAlert {
-        background-color: rgba(255, 255, 255, 0.05); /* Subtle dark grey */
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #cccccc;
+        background: radial-gradient(circle at 0 0,
+            rgba(15, 23, 42, 0.95),
+            rgba(0, 0, 0, 0.98));
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: #d1d5db;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9);
+        padding: 0.9rem 1rem !important;
+        font-size: 0.86rem !important;
+        line-height: 1.5;
+        position: relative;
+        overflow: hidden;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .stAlert::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(
+            180deg,
+            #ff6600,
+            rgba(255, 102, 0, 0.1)
+        );
+    }
+
+    .stAlert code {
+        background-color: rgba(15, 23, 42, 0.8);
+        padding: 0.15rem 0.35rem;
+        border-radius: 4px;
+        color: #fde68a;
+    }
+
+    /* --------------------------------
+       6. MULTISELECT & INPUTS
+    -------------------------------- */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #333333 !important;
+        color: #ffa500 !important;
+        border-radius: 999px;
+        border: 1px solid rgba(156, 163, 175, 0.6);
+    }
+
+    .stMultiSelect [data-baseweb="select"] > div {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border-radius: 999px !important;
+        border: 1px solid rgba(55, 65, 81, 0.9) !important;
+    }
+
+    .stMultiSelect input {
+        color: #e5e7eb !important;
+    }
+
+    /* Generic text inputs */
+    input, textarea {
+        background-color: rgba(15, 23, 42, 0.9) !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(55, 65, 81, 0.9) !important;
+        color: #f9fafb !important;
+    }
+
+    /* --------------------------------
+       7. CHART & TABLE WRAPPERS
+    -------------------------------- */
+    /* Plotly charts get card treatment */
+    div[data-testid="stPlotlyChart"] {
+        background: radial-gradient(circle at 0 0,
+            rgba(15, 23, 42, 0.96),
+            rgba(0, 0, 0, 1));
+        border-radius: 18px;
+        padding: 1.1rem 1.1rem 0.8rem 1.1rem;
+        border: 1px solid rgba(31, 41, 55, 0.85);
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(15, 23, 42, 0.9);
+        transition:
+            transform 0.18s ease-out,
+            box-shadow 0.18s ease-out,
+            border-color 0.18s ease-out;
+    }
+
+    div[data-testid="stPlotlyChart"]:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 26px 70px rgba(0, 0, 0, 1),
+            0 0 0 1px rgba(255, 102, 0, 0.45);
+        border-color: rgba(255, 102, 0, 0.7);
+    }
+
+    /* DataFrames: dark grid with subtle separation */
+    .stDataFrame {
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .stDataFrame table {
+        border-collapse: collapse !important;
+        background-color: #020617 !important;
+    }
+
+    .stDataFrame tbody tr:nth-child(even) {
+        background-color: #020617 !important;
+    }
+
+    .stDataFrame tbody tr:nth-child(odd) {
+        background-color: #030712 !important;
+    }
+
+    .stDataFrame th {
+        background: linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 1),
+            rgba(3, 7, 18, 1)
+        ) !important;
+        color: #e5e7eb !important;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.9) !important;
+        text-transform: uppercase;
+        font-size: 0.72rem !important;
+        letter-spacing: 0.14em;
+    }
+
+    .stDataFrame td {
+        border-bottom: 1px solid rgba(31, 41, 55, 0.85) !important;
+        color: #d1d5db !important;
+        font-size: 0.8rem !important;
+    }
+
+    .stDataFrame tbody tr:hover td {
+        background-color: rgba(15, 23, 42, 0.95) !important;
+    }
+
+    /* --------------------------------
+       8. SCROLLBARS (Subtle, Dark)
+    -------------------------------- */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #020617;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #374151, #111827);
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #4b5563, #111827);
+    }
+
+    /* --------------------------------
+       9. BASIC ANIMATIONS
+    -------------------------------- */
+    @keyframes fadeDown {
+        0% {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 """, unsafe_allow_html=True)
