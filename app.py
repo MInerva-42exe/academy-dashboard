@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 # --- 1. PAGE CONFIGURATION & THEME ---
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# CSS: Import Google Fonts (Lato), Black Background, & Styling
+# CSS: Import Google Fonts (Lato), Black Background, & Styling (PRESERVED LATEST VERSION)
 st.markdown("""
 <style>
 /* --------------------------------
@@ -20,9 +20,6 @@ html, body, [class*="css"] {
 
 /* --------------------------------
    2. DYNAMIC ANIMATED BACKGROUND
-   - Flowing radial gradients
-   - 25s smooth cycle
-   - Layered depth
 -------------------------------- */
 .stApp {
     background:
@@ -31,21 +28,15 @@ html, body, [class*="css"] {
         radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.04), transparent 40%),
         radial-gradient(circle at 50% 30%, rgba(255, 102, 0, 0.15), #000000 70%);
     color: #fafafa;
-    background-color: #000000; /* keep solid black as core */
+    background-color: #000000;
     background-blend-mode: screen, screen, soft-light, normal;
     animation: bgFlow 25s ease-in-out infinite alternate;
 }
 
 @keyframes bgFlow {
-    0% {
-        background-position: 0% 0%, 100% 0%, 0% 100%, 50% 30%;
-    }
-    50% {
-        background-position: 10% 5%, 90% 10%, 5% 90%, 55% 35%;
-    }
-    100% {
-        background-position: 20% 10%, 80% 15%, 10% 85%, 60% 40%;
-    }
+    0% { background-position: 0% 0%, 100% 0%, 0% 100%, 50% 30%; }
+    50% { background-position: 10% 5%, 90% 10%, 5% 90%, 55% 35%; }
+    100% { background-position: 20% 10%, 80% 15%, 10% 85%, 60% 40%; }
 }
 
 .main .block-container {
@@ -56,9 +47,6 @@ html, body, [class*="css"] {
 
 /* --------------------------------
    3. PREMIUM TITLE ANIMATION
-   - Blur to focus
-   - Glow shadow
-   - Left bar + right line accents
 -------------------------------- */
 .main h1 {
     position: relative;
@@ -73,28 +61,14 @@ html, body, [class*="css"] {
     filter: blur(6px);
     opacity: 0;
     transform: translateY(-10px) scale(0.96);
-    text-shadow:
-        0 0 22px rgba(0, 0, 0, 0.9),
-        0 0 28px rgba(255, 102, 0, 0.6);
+    text-shadow: 0 0 22px rgba(0, 0, 0, 0.9), 0 0 28px rgba(255, 102, 0, 0.6);
     animation: titleReveal 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 @keyframes titleReveal {
-    0% {
-        opacity: 0;
-        filter: blur(6px);
-        transform: translateY(-10px) scale(0.96);
-    }
-    60% {
-        opacity: 1;
-        filter: blur(0px);
-        transform: translateY(2px) scale(1.05);
-    }
-    100% {
-        opacity: 1;
-        filter: blur(0px);
-        transform: translateY(0) scale(1);
-    }
+    0% { opacity: 0; filter: blur(6px); transform: translateY(-10px) scale(0.96); }
+    60% { opacity: 1; filter: blur(0px); transform: translateY(2px) scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: translateY(0) scale(1); }
 }
 
 /* Left vertical bar */
@@ -147,26 +121,17 @@ html, body, [class*="css"] {
     margin-bottom: 0.6rem !important;
 }
 
-.main p {
-    color: #9ca3af !important;
-}
+.main p { color: #9ca3af !important; }
 
 /* --------------------------------
    4. NEXT-LEVEL KPI CARDS
-   - Glass morph
-   - Staggered float + slight rotation
-   - Pulsing borders & shine
 -------------------------------- */
 div[data-testid="metric-container"] {
-    background: radial-gradient(circle at 0 0,
-        rgba(255, 255, 255, 0.09),
-        rgba(0, 0, 0, 0.98));
+    background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.98));
     border-radius: 22px;
     padding: 1.25rem 1.6rem !important;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 28px 70px rgba(0, 0, 0, 0.98),
-        0 0 0 1px rgba(15, 23, 42, 0.9);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.98), 0 0 0 1px rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(18px);
     position: relative;
     overflow: hidden;
@@ -175,37 +140,23 @@ div[data-testid="metric-container"] {
     animation: metricFloat 0.7s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
-/* Staggered timings */
 div[data-testid="metric-container"]:nth-of-type(1) { animation-delay: 0.15s; }
 div[data-testid="metric-container"]:nth-of-type(2) { animation-delay: 0.25s; }
 div[data-testid="metric-container"]:nth-of-type(3) { animation-delay: 0.35s; }
 div[data-testid="metric-container"]:nth-of-type(4) { animation-delay: 0.45s; }
 
 @keyframes metricFloat {
-    0% {
-        opacity: 0;
-        transform: translateY(14px) scale(0.94) rotateX(6deg);
-    }
-    65% {
-        opacity: 1;
-        transform: translateY(-2px) scale(1.02) rotateX(0deg);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1) rotateX(0deg);
-    }
+    0% { opacity: 0; transform: translateY(14px) scale(0.94) rotateX(6deg); }
+    65% { opacity: 1; transform: translateY(-2px) scale(1.02) rotateX(0deg); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
 }
 
-/* Pulsing gradient border via overlay */
 div[data-testid="metric-container"]::after {
     content: "";
     position: absolute;
     inset: -1px;
     border-radius: inherit;
-    background: linear-gradient(135deg,
-        rgba(255, 102, 0, 0.9),
-        rgba(255, 255, 255, 0.15),
-        rgba(255, 102, 0, 0.6));
+    background: linear-gradient(135deg, rgba(255, 102, 0, 0.9), rgba(255, 255, 255, 0.15), rgba(255, 102, 0, 0.6));
     opacity: 0;
     mix-blend-mode: screen;
     pointer-events: none;
@@ -219,42 +170,12 @@ div[data-testid="metric-container"]::after {
     100% { opacity: 0.0; }
 }
 
-/* Diagonal shine on hover */
-div[data-testid="metric-container"]::before {
-    content: "";
-    position: absolute;
-    top: -150%;
-    left: -80%;
-    width: 260%;
-    height: 260%;
-    background: linear-gradient(
-        130deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.22) 20%,
-        rgba(255, 255, 255, 0.05) 55%,
-        transparent 100%
-    );
-    opacity: 0;
-    transform: translate3d(-20%, 0, 0);
-    transition: opacity 0.5s ease-out, transform 0.7s ease-out;
-    pointer-events: none;
-}
-
-div[data-testid="metric-container"]:hover::before {
-    opacity: 1;
-    transform: translate3d(10%, 0, 0);
-}
-
-/* 3D hover lift */
 div[data-testid="metric-container"]:hover {
     transform: translateY(-4px) scale(1.02) rotateX(0deg);
-    box-shadow:
-        0 32px 80px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(255, 102, 0, 0.7);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255, 102, 0, 0.7);
     border-color: rgba(255, 102, 0, 0.85);
 }
 
-/* Metric text styling */
 div[data-testid="stMetricLabel"] {
     color: #e5e7eb !important;
     font-size: 0.78rem !important;
@@ -264,30 +185,21 @@ div[data-testid="stMetricLabel"] {
 }
 
 div[data-testid="stMetricValue"] {
-    color: #ff6600 !important; /* keep core orange */
+    color: #ff6600 !important;
     font-size: 2.0rem !important;
     font-weight: 800 !important;
-    text-shadow:
-        0 0 18px rgba(255, 102, 0, 0.7),
-        0 0 34px rgba(0, 0, 0, 1);
+    text-shadow: 0 0 18px rgba(255, 102, 0, 0.7), 0 0 34px rgba(0, 0, 0, 1);
     animation: valuePulse 2.8s ease-in-out infinite;
 }
 
 @keyframes valuePulse {
-    0%   { text-shadow: 0 0 14px rgba(255, 102, 0, 0.6); }
-    50%  { text-shadow: 0 0 26px rgba(255, 102, 0, 0.9); }
+    0% { text-shadow: 0 0 14px rgba(255, 102, 0, 0.6); }
+    50% { text-shadow: 0 0 26px rgba(255, 102, 0, 0.9); }
     100% { text-shadow: 0 0 14px rgba(255, 102, 0, 0.6); }
-}
-
-div[data-testid="stMetricDelta"] {
-    font-size: 0.8rem !important;
-    color: #a5b4fc !important;
 }
 
 /* --------------------------------
    5. FUTURISTIC TABS
-   - Gradient/bg glow
-   - Pulsing bottom line
 -------------------------------- */
 .stTabs [data-baseweb="tab-list"] {
     width: 100%;
@@ -300,11 +212,7 @@ div[data-testid="stMetricDelta"] {
     flex-grow: 1;
     text-align: center;
     height: 52px;
-    background: linear-gradient(
-        135deg,
-        rgba(15, 23, 42, 0.95),
-        rgba(0, 0, 0, 1)
-    );
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(0, 0, 0, 1));
     border-radius: 16px;
     color: #9CA3AF;
     border: 1px solid rgba(31, 41, 55, 0.95);
@@ -312,58 +220,23 @@ div[data-testid="stMetricDelta"] {
     font-size: 0.78rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    transition:
-        color 0.18s cubic-bezier(0.19, 1, 0.22, 1),
-        background 0.18s cubic-bezier(0.19, 1, 0.22, 1),
-        transform 0.18s cubic-bezier(0.19, 1, 0.22, 1),
-        box-shadow 0.18s cubic-bezier(0.19, 1, 0.22, 1),
-        border-color 0.18s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: all 0.18s cubic-bezier(0.19, 1, 0.22, 1);
     position: relative;
     overflow: hidden;
 }
 
-/* Hover glow */
-.stTabs [data-baseweb="tab"]::before {
-    content: "";
-    position: absolute;
-    inset: -40%;
-    background: radial-gradient(circle at 20% 0,
-        rgba(255, 102, 0, 0.25),
-        transparent 60%);
-    opacity: 0;
-    transform: scale(0.6);
-    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-    pointer-events: none;
-}
-
-.stTabs [data-baseweb="tab"]:hover::before {
-    opacity: 0.7;
-    transform: scale(1);
-}
-
 .stTabs [data-baseweb="tab"]:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(148, 163, 184, 0.25),
-        rgba(0, 0, 0, 1)
-    );
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.25), rgba(0, 0, 0, 1));
     color: #ffffff;
     transform: translateY(-2px);
-    box-shadow:
-        0 18px 45px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(148, 163, 184, 0.8);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 1), 0 0 0 1px rgba(148, 163, 184, 0.8);
     border-color: rgba(148, 163, 184, 0.9);
 }
 
-/* Active tab */
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: radial-gradient(circle at 10% 0,
-        rgba(255, 102, 0, 0.35),
-        #000000);
+    background: radial-gradient(circle at 10% 0, rgba(255, 102, 0, 0.35), #000000);
     color: #ff6600;
-    box-shadow:
-        0 22px 60px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(255, 102, 0, 0.95);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255, 102, 0, 0.95);
     transform: translateY(-1px) scale(1.01);
     border-color: rgba(255, 102, 0, 0.95);
 }
@@ -382,24 +255,19 @@ div[data-testid="stMetricDelta"] {
 }
 
 @keyframes tabPulse {
-    0%   { opacity: 0.5; transform: scaleX(0.95); }
-    100% { opacity: 1;   transform: scaleX(1.05); }
+    0% { opacity: 0.5; transform: scaleX(0.95); }
+    100% { opacity: 1; transform: scaleX(1.05); }
 }
 
 /* --------------------------------
-   6. ENHANCED INFO BOXES (st.info)
-   - Slide-in, pulsing border, floating glow
+   6. ENHANCED INFO BOXES
 -------------------------------- */
 .stAlert {
-    background: radial-gradient(circle at 0 0,
-        rgba(15, 23, 42, 1),
-        rgba(0, 0, 0, 1));
+    background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 1), rgba(0, 0, 0, 1));
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.5);
     color: #d1d5db;
-    box-shadow:
-        0 24px 70px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(15, 23, 42, 0.95);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 1), 0 0 0 1px rgba(15, 23, 42, 0.95);
     padding: 1rem 1.2rem !important;
     font-size: 0.86rem !important;
     line-height: 1.6;
@@ -411,7 +279,7 @@ div[data-testid="stMetricDelta"] {
 }
 
 @keyframes infoSlide {
-    0%   { opacity: 0; transform: translateX(-10px); }
+    0% { opacity: 0; transform: translateX(-10px); }
     100% { opacity: 1; transform: translateX(0); }
 }
 
@@ -423,105 +291,44 @@ div[data-testid="stMetricDelta"] {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: linear-gradient(
-        180deg,
-        #ff6600,
-        rgba(255, 102, 0, 0.05),
-        #ff6600
-    );
+    background: linear-gradient(180deg, #ff6600, rgba(255, 102, 0, 0.05), #ff6600);
     box-shadow: 0 0 18px rgba(255, 102, 0, 0.9);
     animation: borderGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes borderGlow {
-    0%   { opacity: 0.6; }
+    0% { opacity: 0.6; }
     100% { opacity: 1; }
 }
 
-/* Floating corner glow */
-.stAlert::after {
-    content: "";
-    position: absolute;
-    right: -20%;
-    top: -20%;
-    width: 45%;
-    height: 45%;
-    background: radial-gradient(circle,
-        rgba(255, 255, 255, 0.08),
-        transparent 70%);
-    opacity: 0.6;
-    filter: blur(2px);
-}
-
-/* Inline code inside info */
-.stAlert code {
-    background-color: rgba(15, 23, 42, 0.9);
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    color: #fde68a;
-}
-
 /* --------------------------------
-   7. CHART CONTAINERS (Plotly)
-   - Glow, lift, frosted glass
+   7. CHART CONTAINERS
 -------------------------------- */
 div[data-testid="stPlotlyChart"] {
-    background: radial-gradient(circle at 0 0,
-        rgba(15, 23, 42, 1),
-        rgba(0, 0, 0, 1));
+    background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 1), rgba(0, 0, 0, 1));
     border-radius: 22px;
     padding: 1.15rem 1.2rem 0.9rem 1.2rem;
     border: 1px solid rgba(31, 41, 55, 0.95);
-    box-shadow:
-        0 28px 80px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(15, 23, 42, 0.95);
-    transition:
-        transform 0.2s ease-out,
-        box-shadow 0.2s ease-out,
-        border-color 0.2s ease-out;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 1), 0 0 0 1px rgba(15, 23, 42, 0.95);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(16px);
 }
 
-/* Subtle orange glow */
-div[data-testid="stPlotlyChart"]::before {
-    content: "";
-    position: absolute;
-    inset: -20%;
-    background: radial-gradient(circle at 0 0,
-        rgba(255, 102, 0, 0.22),
-        transparent 65%);
-    opacity: 0.32;
-    mix-blend-mode: screen;
-    pointer-events: none;
-    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-}
-
-div[data-testid="stPlotlyChart"]:hover::before {
-    opacity: 0.55;
-    transform: scale(1.03);
-}
-
-/* Hover lift + scale */
 div[data-testid="stPlotlyChart"]:hover {
     transform: translateY(-3px) scale(1.01);
-    box-shadow:
-        0 32px 90px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(255, 102, 0, 0.55);
+    box-shadow: 0 32px 90px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255, 102, 0, 0.55);
     border-color: rgba(255, 102, 0, 0.85);
 }
 
 /* --------------------------------
    8. PREMIUM DATA TABLES
-   - Orange borders, smooth hover
 -------------------------------- */
 .stDataFrame {
     border-radius: 18px !important;
     overflow: hidden !important;
-    box-shadow:
-        0 24px 70px rgba(0, 0, 0, 1),
-        0 0 0 1px rgba(15, 23, 42, 0.95);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 1), 0 0 0 1px rgba(15, 23, 42, 0.95);
 }
 
 .stDataFrame table {
@@ -530,20 +337,11 @@ div[data-testid="stPlotlyChart"]:hover {
     border: 1px solid rgba(31, 41, 55, 0.9) !important;
 }
 
-.stDataFrame tbody tr:nth-child(even) {
-    background-color: #020617 !important;
-}
-
-.stDataFrame tbody tr:nth-child(odd) {
-    background-color: #030712 !important;
-}
+.stDataFrame tbody tr:nth-child(even) { background-color: #020617 !important; }
+.stDataFrame tbody tr:nth-child(odd) { background-color: #030712 !important; }
 
 .stDataFrame th {
-    background: linear-gradient(
-        135deg,
-        rgba(15, 23, 42, 1),
-        rgba(3, 7, 18, 1)
-    ) !important;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(3, 7, 18, 1)) !important;
     color: #e5e7eb !important;
     border-bottom: 1px solid rgba(55, 65, 81, 0.95) !important;
     text-transform: uppercase;
@@ -560,38 +358,23 @@ div[data-testid="stPlotlyChart"]:hover {
     padding: 0.55rem 0.75rem !important;
 }
 
-/* Row hover with orange side highlight */
 .stDataFrame tbody tr:hover td {
-    background: linear-gradient(90deg,
-        rgba(255, 102, 0, 0.12),
-        rgba(15, 23, 42, 0.98)) !important;
+    background: linear-gradient(90deg, rgba(255, 102, 0, 0.12), rgba(15, 23, 42, 0.98)) !important;
     border-left: 2px solid #ff6600 !important;
 }
 
 /* --------------------------------
    9. CUSTOM SCROLLBARS
-   - Orange gradient, glow on hover
 -------------------------------- */
-::-webkit-scrollbar {
-    width: 9px;
-    height: 9px;
-}
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: #020617; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff6600, #7c2d12); border-radius: 999px; box-shadow: 0 0 10px rgba(255, 102, 0, 0.7); }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #ff6600, #ea580c); box-shadow: 0 0 14px rgba(255, 102, 0, 0.9), 0 0 22px rgba(0, 0, 0, 0.9); }
 
-::-webkit-scrollbar-track {
-    background: #020617;
-}
-
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #ff6600, #7c2d12);
-    border-radius: 999px;
-    box-shadow: 0 0 10px rgba(255, 102, 0, 0.7);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #ff6600, #ea580c);
-    box-shadow:
-        0 0 14px rgba(255, 102, 0, 0.9),
-        0 0 22px rgba(0, 0, 0, 0.9);
+/* Multiselect Tag Color Override */
+.stMultiSelect [data-baseweb="tag"] {
+    background-color: #333333 !important;
+    color: #ffa500 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -613,6 +396,13 @@ METRIC_TOOLTIPS = {
     **Metric:** The percentage rate at which your user base is expanding (or shrinking) compared to the previous month.
     
     **Calculation:** ((Current Unique Users - Previous Unique Users) / Previous Unique Users) * 100
+    """,
+    "unique_users_bar": """
+    **Monthly Unique User Signups**
+    
+    **Metric:** Absolute count of unique users acquired per month (Headcount).
+    
+    **Why it matters:** Unlike the trend line (which mixes enrollments), this isolates pure user base growth.
     """,
     "geo_users": """
     **Global User Distribution**
@@ -839,6 +629,30 @@ if check_password():
                     # FIX: Force X-Axis to be monthly ticks
                     fig_mom.update_xaxes(dtick="M1", tickformat="%b %Y")
                     st.plotly_chart(fig_mom, use_container_width=True)
+
+                    # --- NEW: MONTHLY UNIQUE USER SIGNUPS (HORIZONTAL BAR) ---
+                    st.markdown("#### Monthly Unique Signups")
+                    st.info(METRIC_TOOLTIPS["unique_users_bar"]) # VISIBLE INFO BOX
+
+                    # Sort for display (chronological)
+                    # We use the filtered dataframe which is already sorted by Month
+                    fig_unique = px.bar(
+                        df_filtered,
+                        x='Unique User Signups',
+                        y='Month_Label', # Use Label for category
+                        orientation='h',
+                        text='Unique User Signups'
+                    )
+                    fig_unique.update_traces(marker_color='#ff6600', textposition='auto')
+                    fig_unique.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        height=400,
+                        # IMPORTANT: Ensure Y-axis follows the dataframe order (Chronological)
+                        yaxis={'categoryorder':'array', 'categoryarray': df_filtered['Month_Label']}
+                    )
+                    st.plotly_chart(fig_unique, use_container_width=True)
 
                     st.markdown("### Detailed Data")
                     display_table = df_filtered[['Month_Label', 'Enrollments', 'Unique User Signups', 'MoM_Growth']].rename(
