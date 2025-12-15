@@ -416,6 +416,15 @@ if check_password():
             st.subheader("Detailed Course Drop-off Analysis")
             if data.get("Course_DropOff") is not None:
                 st.dataframe(data["Course_DropOff"], use_container_width=True)
+            
+            # --- New Table Added Here ---
+            st.subheader("All Course Sign-up Volumes")
+            if data.get("Course") is not None:
+                st.dataframe(
+                    data["Course"][["Course", "Sign Ups"]].sort_values("Sign Ups", ascending=False),
+                    use_container_width=True,
+                    hide_index=True
+                )
 
         # === TAB 4: USER INSIGHTS ===
         with tab_business:
