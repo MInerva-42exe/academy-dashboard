@@ -123,7 +123,6 @@ TOOLTIPS = {
     "funnel": "**Drop-off Funnel**: Visualizes user progression from Enrollment to Completion.",
     "enrollment_trend": "**Enrollment Trends**: The number of course enrollments over time.",
     "signup_trend": "**Sign Up Trends**: The number of new unique user registrations over time.",
-    # UPDATED TOOLTIPS BELOW
     "geo": "**Global Distribution**: Where users are located based on their IP.",
     "popular": "**Popular Courses**: Courses with the highest cumulative sign-up counts.",
     "segmentation": "**User Segmentation**: Breakdown of users by email domain type (Business vs Generic vs Invalid).",
@@ -181,7 +180,8 @@ if check_password():
                 "Activation": "Activation Rate D30",
                 "DropOff_Split": "Drop-off Stage Split",
                 "Course_DropOff": "Course-level Drop-off (All)",
-                "User_Engagement": "User and Course Engagement"
+                "User_Engagement": "User and Course Engagement",
+                "Badges_Issued": "Badges Issued"  # NEW SHEET
             }
 
             for key, sheet_name in sheet_map.items():
@@ -206,21 +206,6 @@ if check_password():
             if data["Completion"] is not None:
                 data["Completion"].rename(columns={"Avg %": "Avg Completion %"}, inplace=True)
 
-            # Badges Logic
-            if data["Master"] is not None:
-                try:
-                    df_m = data["Master"]
-                    badges = df_m[df_m['Completed Percentage'] == 100].copy()
-                    if not badges.empty:
-                        badges['Completion Date'] = pd.to_datetime(badges['Course/Bundle Completed Date'], errors='coerce')
-                        badges_grouped = badges.groupby(badges['Completion Date'].dt.to_period('M')).size().reset_index(name='Number of Badges')
-                        badges_grouped['Month'] = badges_grouped['Completion Date'].dt.strftime('%b %Y')
-                        data["Badges"] = badges_grouped
-                    else:
-                        data["Badges"] = pd.DataFrame(columns=["Month", "Number of Badges"])
-                except:
-                    data["Badges"] = pd.DataFrame(columns=["Month", "Number of Badges"])
-
             return data
         
         except Exception as e:
@@ -238,7 +223,17 @@ if check_password():
         # --- KPI SECTION ---
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
-        total_badges = data["Badges"]["Number of Badges"].sum() if data.get("Badges") is not None else 0
+        
+        # New KPI Logic for Badges
+        total_badges = 0
+        if data.get("Badges_Issued") is not None:
+            # Assuming format: Metric | Count
+            df_badges = data["Badges_Issued"]
+            # Look for "Total Sent" row
+            row = df_badges[df_badges.iloc[:, 0] == "Total Sent"]
+            if not row.empty:
+                total_badges = row.iloc[0, 1]
+
         current_mau = 0
         if data.get("MAU") is not None and not data["MAU"].empty:
             current_mau = data["MAU"].iloc[-1]["MAU"]
@@ -387,13 +382,10 @@ if check_password():
                     df_funnel = data["DropOff_Split"]
                     
                     # Create custom text labels with count and %
-                    # Calculation assumes 'All Count' is the value
                     total_start = df_funnel['All Count'].max()
                     df_funnel['pct'] = (df_funnel['All Count'] / total_start * 100).fillna(0).round(1).astype(str) + '%'
-                    # Label format: "433 (100.0%)"
                     df_funnel['text_label'] = df_funnel['All Count'].astype(str) + " (" + df_funnel['pct'] + ")"
                     
-                    # Use go.Bar with orientation='h' for left alignment
                     fig_funnel = go.Figure(go.Bar(
                         x=df_funnel['All Count'],
                         y=df_funnel['Stage'],
@@ -403,7 +395,6 @@ if check_password():
                         marker={"color": ["#333", "#666", "#999", "#ff6600"]}
                     ))
                     
-                    # Reverse Y-axis so the first stage is at the top
                     fig_funnel.update_layout(
                         template="plotly_dark", 
                         paper_bgcolor='rgba(0,0,0,0)', 
@@ -496,6 +487,11 @@ if check_password():
                                    color_discrete_sequence=['#ff6600', '#cc5200', '#993d00'])
                     fig_eng.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
                     st.plotly_chart(fig_eng, use_container_width=True)
+            
+            # --- New Badge Stats Table ---
+            st.subheader("Badge Statistics")
+            if data.get("Badges_Issued") is not None:
+                st.dataframe(data["Badges_Issued"], use_container_width=True, hide_index=True)
 
     else:
         st.error("Could not load data. Please ensure the Excel file is present.")
