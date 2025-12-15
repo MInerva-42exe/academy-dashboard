@@ -127,6 +127,7 @@ TOOLTIPS = {
     "popular": "**Popular Courses**: Courses with the highest cumulative sign-up counts.",
     "segmentation": "**User Segmentation**: Breakdown of users by email domain type (Business vs Generic vs Invalid).",
     "engagement": "**Engagement Depth**: Distribution of users based on how many courses they have enrolled in.",
+    "completion": "**Average Completion %**: The average progress percentage of all users enrolled in a specific course."
 }
 
 # --- HELPER FUNCTIONS ---
@@ -200,6 +201,10 @@ if check_password():
                 # Apply truncation immediately for charts
                 data["Course"]["ShortName"] = data["Course"]["Course"].apply(lambda x: truncate_label(x))
             
+            # Completion - Renamed correctly to generic 'Course' not 'Starter Kit'
+            if data["Completion"] is not None:
+                data["Completion"].rename(columns={"Avg %": "Avg Completion %"}, inplace=True)
+
             # Badges Logic
             if data["Master"] is not None:
                 try:
@@ -413,15 +418,52 @@ if check_password():
                                            height=400, dragmode="pan")
                     st.plotly_chart(fig_course, use_container_width=True, config={'scrollZoom': True})
 
+            # --- New: Course Completion Chart ---
+            st.subheader("Course Completion Rates (Top 15 by Volume)")
+            st.info(TOOLTIPS["completion"])
+            
+            # Prepare merged data for chart
+            df_chart_data = None
+            if data.get("Course") is not None and data.get("Completion") is not None:
+                # Merge Signups and Completion
+                df_merged = pd.merge(
+                    data["Course"], 
+                    data["Completion"][["Course", "Avg Completion %"]], 
+                    on="Course", 
+                    how="left"
+                ).fillna(0)
+                
+                # Get top 15 by sign ups
+                df_chart_data = df_merged.sort_values("Sign Ups", ascending=False).head(15)
+                
+                if not df_chart_data.empty:
+                    fig_comp = px.bar(df_chart_data, x="Avg Completion %", y="ShortName", orientation='h',
+                                    text="Avg Completion %")
+                    fig_comp.update_traces(marker_color='#3B82F6', texttemplate='%{text:.1f}%', textposition='outside')
+                    fig_comp.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)',
+                                         yaxis={'categoryorder':'total ascending', 'automargin': True}, 
+                                         height=400, dragmode="pan", xaxis_title="Average Completion Percentage")
+                    st.plotly_chart(fig_comp, use_container_width=True, config={'scrollZoom': True})
+
+            # --- Detail Tables ---
             st.subheader("Detailed Course Drop-off Analysis")
             if data.get("Course_DropOff") is not None:
                 st.dataframe(data["Course_DropOff"], use_container_width=True)
             
-            # --- New Table Added Here ---
-            st.subheader("All Course Sign-up Volumes")
-            if data.get("Course") is not None:
+            # --- New Full Merged Table ---
+            st.subheader("All Course Performance Data")
+            if data.get("Course") is not None and data.get("Completion") is not None:
+                # Re-merge to ensure we have the full list (not just top 15)
+                df_full = pd.merge(
+                    data["Course"][["Course", "Sign Ups"]], 
+                    data["Completion"][["Course", "Avg Completion %"]], 
+                    on="Course", 
+                    how="left"
+                )
+                df_full["Avg Completion %"] = df_full["Avg Completion %"].fillna(0).round(2)
+                
                 st.dataframe(
-                    data["Course"][["Course", "Sign Ups"]].sort_values("Sign Ups", ascending=False),
+                    df_full.sort_values("Sign Ups", ascending=False),
                     use_container_width=True,
                     hide_index=True
                 )
