@@ -179,7 +179,7 @@ if check_password():
                 "Course_DropOff": "Course-level Drop-off (All)",
                 "User_Engagement": "User and Course Engagement",
                 "Badges_Issued": "Badges Issued",
-                "User_Segmentation": "User Segmentation" # NEW CONNECTION
+                "User_Segmentation": "User Segmentation"
             }
 
             for key, sheet_name in sheet_map.items():
@@ -217,16 +217,32 @@ if check_password():
         st.markdown("---")
 
         # --- KPI SECTION ---
+        # 1. Net Enrollments
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
-        total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         
+        # 2. Unique Users (UPDATED LOGIC: FROM USER SEGMENTATION SHEET)
+        total_unique = 0
+        if data.get("User_Segmentation") is not None:
+            df_seg = data["User_Segmentation"]
+            # Look for row where Segment == "Total Users"
+            row_u = df_seg[df_seg['Segment'] == 'Total Users']
+            if not row_u.empty:
+                total_unique = row_u.iloc[0]['Count']
+            else:
+                # Fallback to sum if row not found, though ideally should exist
+                total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
+        else:
+            total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
+
+        # 3. Badges Issued (FROM BADGES ISSUED SHEET)
         total_badges = 0
         if data.get("Badges_Issued") is not None:
             df_badges = data["Badges_Issued"]
-            row = df_badges[df_badges.iloc[:, 0] == "Total Sent"]
-            if not row.empty:
-                total_badges = row.iloc[0, 1]
+            row_b = df_badges[df_badges.iloc[:, 0] == "Total Sent"]
+            if not row_b.empty:
+                total_badges = row_b.iloc[0, 1]
 
+        # 4. MAU
         current_mau = 0
         if data.get("MAU") is not None and not data["MAU"].empty:
             current_mau = data["MAU"].iloc[-1]["MAU"]
@@ -458,16 +474,13 @@ if check_password():
                 st.subheader("User Segmentation")
                 st.info(TOOLTIPS["segmentation"])
                 
-                # --- NEW LOGIC: READ FROM SUMMARY TABLE ---
                 if data.get("User_Segmentation") is not None:
                     df_seg = data["User_Segmentation"]
-                    # Assumes column names 'Segment' and 'Count' based on your provided format
                     try:
                         biz_c = df_seg[df_seg['Segment'] == 'Business Users']['Count'].iloc[0]
                         gen_c = df_seg[df_seg['Segment'] == 'Generic Users']['Count'].iloc[0]
                         blk_c = df_seg[df_seg['Segment'] == 'Invalid Users']['Count'].iloc[0]
                     except:
-                        # Fallback if names don't match exactly
                         biz_c, gen_c, blk_c = 0, 0, 0
 
                     labels = ["Business", "Generic", "Blocked"]
@@ -489,7 +502,6 @@ if check_password():
                     fig_eng.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
                     st.plotly_chart(fig_eng, use_container_width=True)
             
-            # --- Badge Stats Table ---
             st.subheader("Badge Statistics")
             if data.get("Badges_Issued") is not None:
                 st.dataframe(data["Badges_Issued"], use_container_width=True, hide_index=True)
