@@ -123,11 +123,12 @@ TOOLTIPS = {
     "funnel": "**Drop-off Funnel**: Visualizes user progression from Enrollment to Completion.",
     "enrollment_trend": "**Enrollment Trends**: The number of course enrollments over time.",
     "signup_trend": "**Sign Up Trends**: The number of new unique user registrations over time.",
-    "geo": "**Global Distribution**: Where your users are located based on their registration country.",
+    # UPDATED TOOLTIPS BELOW
+    "geo": "**Global Distribution**: Where users are located based on their IP.",
     "popular": "**Popular Courses**: Courses with the highest cumulative sign-up counts.",
     "segmentation": "**User Segmentation**: Breakdown of users by email domain type (Business vs Generic vs Invalid).",
     "engagement": "**Engagement Depth**: Distribution of users based on how many courses they have enrolled in.",
-    "completion": "**Average Completion %**: The average progress percentage of all users enrolled in a specific course."
+    "completion": "**Average Completion %**: The average percentage of users who've enrolled in a specific course and completed it 100%."
 }
 
 # --- HELPER FUNCTIONS ---
@@ -201,7 +202,7 @@ if check_password():
                 # Apply truncation immediately for charts
                 data["Course"]["ShortName"] = data["Course"]["Course"].apply(lambda x: truncate_label(x))
             
-            # Completion - Renamed correctly to generic 'Course' not 'Starter Kit'
+            # Completion
             if data["Completion"] is not None:
                 data["Completion"].rename(columns={"Avg %": "Avg Completion %"}, inplace=True)
 
@@ -230,7 +231,6 @@ if check_password():
 
     # --- DASHBOARD UI ---
     if data:
-        # Title Change
         st.title("ManageEngine User Academy Dashboard")
         st.markdown(f"*Data updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}*")
         st.markdown("---")
@@ -259,14 +259,12 @@ if check_password():
 
         # === TAB 1: GROWTH & RETENTION ===
         with tab_growth:
-            # Date Filter
             st.subheader("Time Period Filter")
             
             # Generate Month List Jun 2023 - Dec 2025
             all_months_dt = pd.period_range(start='2023-06', end='2025-12', freq='M')
             all_months_str = all_months_dt.strftime('%b %Y').tolist()
             
-            # Default indices for Jun 2024 - Dec 2025
             try:
                 default_start = all_months_str.index("Jun 2024")
                 default_end = all_months_str.index("Dec 2025")
@@ -279,13 +277,11 @@ if check_password():
                 value=(all_months_str[default_start], all_months_str[default_end])
             )
             
-            # Helper to filter DF by Month string
             def filter_by_date(df, date_col, start_str, end_str):
                 if df is None or df.empty: return df
                 temp_df = df.copy()
                 temp_df['__dt'] = pd.to_datetime(temp_df[date_col], format='%b %Y', errors='coerce')
                 
-                # Handle Cohort format in Activation which might be same
                 if date_col == 'Cohort':
                      temp_df['__dt'] = pd.to_datetime(temp_df[date_col], format='%b %Y', errors='coerce')
 
@@ -294,7 +290,6 @@ if check_password():
                 
                 return temp_df[(temp_df['__dt'] >= s_dt) & (temp_df['__dt'] <= e_dt)].sort_values('__dt')
 
-            # --- Row 1: Trends ---
             col_g1, col_g2 = st.columns(2)
             
             with col_g1:
@@ -309,13 +304,11 @@ if check_password():
                             mode='lines+markers', name='Enrollments',
                             line=dict(color='#ff6600', width=3)
                         ))
-                        # Enable scroll zoom
                         fig_trend.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=350,
                                               xaxis=dict(fixedrange=False), dragmode="pan") 
                         st.plotly_chart(fig_trend, use_container_width=True, config={'scrollZoom': True, 'displayModeBar': True})
             
             with col_g2:
-                # Sign Up Trends
                 st.subheader("User Sign Up Trends") 
                 st.info(TOOLTIPS["signup_trend"])
                 if data.get("Monthly_Unique") is not None:
@@ -325,13 +318,12 @@ if check_password():
                         fig_signup.add_trace(go.Scatter(
                             x=df_signup['Month'], y=df_signup['Unique User Signups'],
                             mode='lines+markers', name='Sign Ups',
-                            line=dict(color='#3B82F6', width=3) # Different color for distinction
+                            line=dict(color='#3B82F6', width=3)
                         ))
                         fig_signup.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=350,
                                                xaxis=dict(fixedrange=False), dragmode="pan")
                         st.plotly_chart(fig_signup, use_container_width=True, config={'scrollZoom': True, 'displayModeBar': True})
 
-            # --- Row 2: MAU & Activation ---
             col_g3, col_g4 = st.columns(2)
             
             with col_g3:
@@ -376,7 +368,6 @@ if check_password():
                     st.plotly_chart(fig_map, use_container_width=True)
                 
                 with col_geo2:
-                    # Top 10 Countries Table
                     st.markdown("#### Top 10 Countries")
                     top_10 = df_geo.sort_values("Total Course Signups", ascending=False).head(10)
                     st.dataframe(
@@ -394,38 +385,50 @@ if check_password():
                 st.info(TOOLTIPS["funnel"])
                 if data.get("DropOff_Split") is not None:
                     df_funnel = data["DropOff_Split"]
-                    fig_funnel = go.Figure(go.Funnel(
-                        y=df_funnel['Stage'],
+                    
+                    # Create custom text labels with count and %
+                    # Calculation assumes 'All Count' is the value
+                    total_start = df_funnel['All Count'].max()
+                    df_funnel['pct'] = (df_funnel['All Count'] / total_start * 100).fillna(0).round(1).astype(str) + '%'
+                    # Label format: "433 (100.0%)"
+                    df_funnel['text_label'] = df_funnel['All Count'].astype(str) + " (" + df_funnel['pct'] + ")"
+                    
+                    # Use go.Bar with orientation='h' for left alignment
+                    fig_funnel = go.Figure(go.Bar(
                         x=df_funnel['All Count'],
-                        textinfo="value+percent initial",
+                        y=df_funnel['Stage'],
+                        orientation='h',
+                        text=df_funnel['text_label'],
+                        textposition='auto',
                         marker={"color": ["#333", "#666", "#999", "#ff6600"]}
                     ))
-                    fig_funnel.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=400)
+                    
+                    # Reverse Y-axis so the first stage is at the top
+                    fig_funnel.update_layout(
+                        template="plotly_dark", 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        height=400,
+                        yaxis=dict(autorange="reversed") 
+                    )
                     st.plotly_chart(fig_funnel, use_container_width=True)
 
             with col_c2:
                 st.subheader("Popular Courses")
                 st.info(TOOLTIPS["popular"])
                 if data.get("Course") is not None:
-                    # Labels are truncated in load_data via 'ShortName'
                     df_course_top = data["Course"].sort_values("Sign Ups", ascending=False).head(15)
                     fig_course = px.bar(df_course_top, x="Sign Ups", y="ShortName", orientation='h',
                                       text="Sign Ups")
                     fig_course.update_traces(marker_color='#ff6600', textposition='outside')
-                    # Layout ensuring labels aren't cut off
                     fig_course.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
                                            yaxis={'categoryorder':'total ascending', 'automargin': True}, 
                                            height=400, dragmode="pan")
                     st.plotly_chart(fig_course, use_container_width=True, config={'scrollZoom': True})
 
-            # --- New: Course Completion Chart ---
             st.subheader("Course Completion Rates (Top 15 by Volume)")
             st.info(TOOLTIPS["completion"])
             
-            # Prepare merged data for chart
-            df_chart_data = None
             if data.get("Course") is not None and data.get("Completion") is not None:
-                # Merge Signups and Completion
                 df_merged = pd.merge(
                     data["Course"], 
                     data["Completion"][["Course", "Avg Completion %"]], 
@@ -433,7 +436,6 @@ if check_password():
                     how="left"
                 ).fillna(0)
                 
-                # Get top 15 by sign ups
                 df_chart_data = df_merged.sort_values("Sign Ups", ascending=False).head(15)
                 
                 if not df_chart_data.empty:
@@ -445,15 +447,12 @@ if check_password():
                                          height=400, dragmode="pan", xaxis_title="Average Completion Percentage")
                     st.plotly_chart(fig_comp, use_container_width=True, config={'scrollZoom': True})
 
-            # --- Detail Tables ---
             st.subheader("Detailed Course Drop-off Analysis")
             if data.get("Course_DropOff") is not None:
                 st.dataframe(data["Course_DropOff"], use_container_width=True)
             
-            # --- New Full Merged Table ---
             st.subheader("All Course Performance Data")
             if data.get("Course") is not None and data.get("Completion") is not None:
-                # Re-merge to ensure we have the full list (not just top 15)
                 df_full = pd.merge(
                     data["Course"][["Course", "Sign Ups"]], 
                     data["Completion"][["Course", "Avg Completion %"]], 
