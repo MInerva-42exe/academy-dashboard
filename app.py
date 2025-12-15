@@ -167,21 +167,19 @@ if check_password():
             xls = pd.ExcelFile(file_path)
             data = {}
             sheet_map = {
-                "Master": "Master",
+                # Removed: Master, Business, Generic, Invalid
                 "Monthly_Enroll": "Monthly Enrollments",
                 "Monthly_Unique": "Monthly User Sign Ups",
                 "Country": "Country Breakdown",
                 "Course": "Course Sign-Up Sheet",
                 "Completion": "Completion Percentage",
-                "Business_Email": "Business",
-                "Generic_Email": "Generic",
-                "Blocked_Email": "Invalid",
                 "MAU": "Monthly Active Users (MAU)",
                 "Activation": "Activation Rate D30",
                 "DropOff_Split": "Drop-off Stage Split",
                 "Course_DropOff": "Course-level Drop-off (All)",
                 "User_Engagement": "User and Course Engagement",
-                "Badges_Issued": "Badges Issued"  # NEW SHEET
+                "Badges_Issued": "Badges Issued",
+                "User_Segmentation": "User Segmentation" # NEW CONNECTION
             }
 
             for key, sheet_name in sheet_map.items():
@@ -199,10 +197,8 @@ if check_password():
                 
             if data["Course"] is not None:
                 data["Course"].rename(columns={"Course Name": "Course", "Course Sign-Ups": "Sign Ups"}, inplace=True)
-                # Apply truncation immediately for charts
                 data["Course"]["ShortName"] = data["Course"]["Course"].apply(lambda x: truncate_label(x))
             
-            # Completion
             if data["Completion"] is not None:
                 data["Completion"].rename(columns={"Avg %": "Avg Completion %"}, inplace=True)
 
@@ -224,12 +220,9 @@ if check_password():
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         
-        # New KPI Logic for Badges
         total_badges = 0
         if data.get("Badges_Issued") is not None:
-            # Assuming format: Metric | Count
             df_badges = data["Badges_Issued"]
-            # Look for "Total Sent" row
             row = df_badges[df_badges.iloc[:, 0] == "Total Sent"]
             if not row.empty:
                 total_badges = row.iloc[0, 1]
@@ -256,7 +249,6 @@ if check_password():
         with tab_growth:
             st.subheader("Time Period Filter")
             
-            # Generate Month List Jun 2023 - Dec 2025
             all_months_dt = pd.period_range(start='2023-06', end='2025-12', freq='M')
             all_months_str = all_months_dt.strftime('%b %Y').tolist()
             
@@ -465,16 +457,25 @@ if check_password():
             with col_b1:
                 st.subheader("User Segmentation")
                 st.info(TOOLTIPS["segmentation"])
-                biz_c = len(data["Business_Email"]) if data.get("Business_Email") is not None else 0
-                gen_c = len(data["Generic_Email"]) if data.get("Generic_Email") is not None else 0
-                blk_c = len(data["Blocked_Email"]) if data.get("Blocked_Email") is not None else 0
                 
-                labels = ["Business", "Generic", "Blocked"]
-                values = [biz_c, gen_c, blk_c]
-                fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, 
-                                               marker=dict(colors=['#ff6600', '#9e9e9e', '#333']))])
-                fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(fig_pie, use_container_width=True)
+                # --- NEW LOGIC: READ FROM SUMMARY TABLE ---
+                if data.get("User_Segmentation") is not None:
+                    df_seg = data["User_Segmentation"]
+                    # Assumes column names 'Segment' and 'Count' based on your provided format
+                    try:
+                        biz_c = df_seg[df_seg['Segment'] == 'Business Users']['Count'].iloc[0]
+                        gen_c = df_seg[df_seg['Segment'] == 'Generic Users']['Count'].iloc[0]
+                        blk_c = df_seg[df_seg['Segment'] == 'Invalid Users']['Count'].iloc[0]
+                    except:
+                        # Fallback if names don't match exactly
+                        biz_c, gen_c, blk_c = 0, 0, 0
+
+                    labels = ["Business", "Generic", "Blocked"]
+                    values = [biz_c, gen_c, blk_c]
+                    fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.5, 
+                                                   marker=dict(colors=['#ff6600', '#9e9e9e', '#333']))])
+                    fig_pie.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+                    st.plotly_chart(fig_pie, use_container_width=True)
                 
             with col_b2:
                 st.subheader("User Engagement Depth")
@@ -488,7 +489,7 @@ if check_password():
                     fig_eng.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
                     st.plotly_chart(fig_eng, use_container_width=True)
             
-            # --- New Badge Stats Table ---
+            # --- Badge Stats Table ---
             st.subheader("Badge Statistics")
             if data.get("Badges_Issued") is not None:
                 st.dataframe(data["Badges_Issued"], use_container_width=True, hide_index=True)
