@@ -166,17 +166,17 @@ if check_password():
         try:
             xls = pd.ExcelFile(file_path)
             data = {}
+            # Updated Sheet Map to match your new file names exactly
             sheet_map = {
-                # Removed: Master, Business, Generic, Invalid
                 "Monthly_Enroll": "Monthly Enrollments",
-                "Monthly_Unique": "Monthly User Sign Ups",
+                "Monthly_Unique": "Monthly User Sign-Ups",    # UPDATED: Added hyphen
                 "Country": "Country Breakdown",
                 "Course": "Course Sign-Up Sheet",
                 "Completion": "Completion Percentage",
-                "MAU": "Monthly Active Users (MAU)",
-                "Activation": "Activation Rate D30",
+                "MAU": "MAU",                                 # UPDATED: Shortened Name
+                "Activation": "Activation Rate (D30)",        # UPDATED: Added parens
                 "DropOff_Split": "Drop-off Stage Split",
-                "Course_DropOff": "Course-level Drop-off (All)",
+                "Course_DropOff": "Course Drop-off (All)",    # UPDATED: Removed '-level'
                 "User_Engagement": "User and Course Engagement",
                 "Badges_Issued": "Badges Issued",
                 "User_Segmentation": "User Segmentation"
@@ -220,24 +220,24 @@ if check_password():
         # 1. Net Enrollments
         total_enrolls = data["Course"]["Sign Ups"].sum() if data.get("Course") is not None else 0
         
-        # 2. Unique Users (UPDATED LOGIC: FROM USER SEGMENTATION SHEET)
+        # 2. Unique Users (UPDATED LOGIC: Uses 'Metric' column instead of 'Segment')
         total_unique = 0
         if data.get("User_Segmentation") is not None:
             df_seg = data["User_Segmentation"]
-            # Look for row where Segment == "Total Users"
-            row_u = df_seg[df_seg['Segment'] == 'Total Users']
+            # Look for row where Metric == "Total Users"
+            row_u = df_seg[df_seg['Metric'] == 'Total Users']
             if not row_u.empty:
                 total_unique = row_u.iloc[0]['Count']
             else:
-                # Fallback to sum if row not found, though ideally should exist
                 total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
         else:
             total_unique = data["Monthly_Unique"]["Unique User Signups"].sum() if data.get("Monthly_Unique") is not None else 0
 
-        # 3. Badges Issued (FROM BADGES ISSUED SHEET)
+        # 3. Badges Issued
         total_badges = 0
         if data.get("Badges_Issued") is not None:
             df_badges = data["Badges_Issued"]
+            # Uses column index 0 (Metric) and 1 (Count)
             row_b = df_badges[df_badges.iloc[:, 0] == "Total Sent"]
             if not row_b.empty:
                 total_badges = row_b.iloc[0, 1]
@@ -476,10 +476,11 @@ if check_password():
                 
                 if data.get("User_Segmentation") is not None:
                     df_seg = data["User_Segmentation"]
+                    # UPDATED: Uses 'Metric' instead of 'Segment'
                     try:
-                        biz_c = df_seg[df_seg['Segment'] == 'Business Users']['Count'].iloc[0]
-                        gen_c = df_seg[df_seg['Segment'] == 'Generic Users']['Count'].iloc[0]
-                        blk_c = df_seg[df_seg['Segment'] == 'Invalid Users']['Count'].iloc[0]
+                        biz_c = df_seg[df_seg['Metric'] == 'Business Users']['Count'].iloc[0]
+                        gen_c = df_seg[df_seg['Metric'] == 'Generic Users']['Count'].iloc[0]
+                        blk_c = df_seg[df_seg['Metric'] == 'Invalid Users']['Count'].iloc[0]
                     except:
                         biz_c, gen_c, blk_c = 0, 0, 0
 
