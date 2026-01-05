@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 # =========================
 # 0) CACHE / VERSIONING
 # =========================
-CACHE_VERSION = "2026-01-05.dashboard.v4"
+CACHE_VERSION = "2026-01-05.dashboard.v5-iconsfix"
 CACHE_TTL_SECONDS = 3600  # 1 hour
 
 
@@ -22,26 +22,137 @@ CACHE_TTL_SECONDS = 3600  # 1 hour
 # =========================
 st.set_page_config(page_title="ManageEngine User Academy Dashboard", layout="wide")
 
+# IMPORTANT:
+# - Do NOT force Inter onto every element (that breaks Material Icons in Streamlit -> shows "keyboard_double_arrow_right")
+# - Apply Inter to normal text elements only
+# - Explicitly restore Material Icons font for icon nodes
 st.markdown(
     """
 <style>
 :root { --accent:#FF6600; --text-muted:#9CA3AF; --text-primary:#F9FAFB; }
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-.stApp, .stApp * { font-family:'Inter', sans-serif !important; }
-.stApp { background: radial-gradient(circle at 50% 50%, rgba(16,16,24,1), #000); background-attachment: fixed; color: var(--text-primary); }
-.main .block-container { padding:1.6rem 2.2rem !important; max-width:1650px !important; }
-h1 { background: linear-gradient(135deg,#FFF 0%, var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900 !important; font-size:2.3rem !important; margin-bottom: 0.2rem !important; }
+
+/* ✅ Apply Inter to text-y elements without clobbering icon fonts */
+.stApp,
+.stApp p,
+.stApp div,
+.stApp span:not(.material-icons):not([class*="material-icons"]),
+.stApp label,
+.stApp input,
+.stApp textarea,
+.stApp button,
+.stApp h1,
+.stApp h2,
+.stApp h3,
+.stApp h4,
+.stApp h5,
+.stApp h6 {
+  font-family:'Inter', sans-serif !important;
+}
+
+/* ✅ Restore Streamlit / Material Icons (fixes icon names rendering as text) */
+.material-icons,
+span.material-icons,
+i.material-icons,
+[data-baseweb="icon"] *,
+[data-testid="stExpanderToggleIcon"] *,
+[data-testid="stIconMaterial"] * {
+  font-family: "Material Icons" !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  word-wrap: normal !important;
+  direction: ltr !important;
+  -webkit-font-feature-settings: "liga" !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* App shell */
+.stApp {
+  background: radial-gradient(circle at 50% 50%, rgba(16,16,24,1), #000);
+  background-attachment: fixed;
+  color: var(--text-primary);
+}
+
+.main .block-container {
+  padding: 1.6rem 2.2rem !important;
+  max-width: 1650px !important;
+}
+
+/* Titles */
+h1 {
+  background: linear-gradient(135deg,#FFF 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900 !important;
+  font-size: 2.3rem !important;
+  margin-bottom: 0.2rem !important;
+}
 h2,h3 { color: var(--text-primary) !important; }
+
 .small-muted { color: var(--text-muted); font-size: 0.9rem; }
 .section-title { margin-top: 0.6rem; margin-bottom: 0.2rem; font-weight: 800; font-size: 1.15rem; }
 .section-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0.8rem 0 0.9rem 0; border-radius: 999px; }
-.stTabs [data-baseweb="tab-list"] { display:flex; width:100%; gap:8px; background: rgba(255,255,255,0.03); padding:8px; border-radius: 14px; }
-.stTabs [data-baseweb="tab"] { flex-grow:1; justify-content:center; background:transparent; color:var(--text-muted); font-weight:700; border-radius: 10px; border:none; }
-.stTabs [data-baseweb="tab"][aria-selected="true"] { background: var(--accent); color:white; box-shadow:0 4px 12px rgba(255,102,0,0.28); }
-div[data-testid="stPlotlyChart"] { background: rgba(20,20,30,0.42); border-radius: 16px; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.05); }
-div[data-testid="metric-container"] { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 0.9rem; }
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+  display:flex; width:100%; gap:8px;
+  background: rgba(255,255,255,0.03);
+  padding: 8px;
+  border-radius: 14px;
+}
+.stTabs [data-baseweb="tab"] {
+  flex-grow:1; justify-content:center;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255,102,0,0.28);
+}
+
+/* Plot cards */
+div[data-testid="stPlotlyChart"] {
+  background: rgba(20,20,30,0.42);
+  border-radius: 16px;
+  padding: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Metrics */
+div[data-testid="metric-container"] {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 0.9rem;
+}
 div[data-testid="stMetricValue"] { color: var(--accent) !important; }
-.stAlert { background: rgba(30,41,59,0.75); border:1px solid rgba(255,255,255,0.10); color:#E2E8F0; font-size:0.92rem; }
+
+/* Alerts */
+.stAlert {
+  background: rgba(30,41,59,0.75);
+  border: 1px solid rgba(255,255,255,0.10);
+  color:#E2E8F0;
+  font-size: 0.92rem;
+}
+
+/* Optional: make expanders feel less like input boxes */
+[data-testid="stExpander"] details {
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+[data-testid="stExpander"] summary {
+  cursor: pointer;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -60,7 +171,6 @@ SOFT_GRAY = "#9e9e9e"
 LILAC = "#A5B4FC"
 MID_GRAY_1 = "#666"
 MID_GRAY_2 = "#999"
-INK = "#111827"
 
 DARK_LAYOUT = dict(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)")
 CHART_CONFIG = {"scrollZoom": True, "displayModeBar": True}
@@ -69,8 +179,6 @@ SHORTNAME_MAX_LEN = 35
 DEFAULT_RANGE_MONTHS = 12
 DEFAULT_PAGE_SIZE = 50
 
-# If your funnel stages are stable, set canonical order here.
-# If not, sheet order is used, and we compute stage-to-stage drop%.
 FUNNEL_STAGE_ORDER = ["Enrolled", "Started", "In Progress", "Completed"]
 
 TOOLTIPS = {
@@ -154,14 +262,12 @@ def info_expander(title: str, body: str):
         st.write(body)
 
 def percent_delta(curr: float, prev: float) -> str:
-    # safe, readable formatting for deltas
     if prev == 0:
         return "—"
     return f"{((curr - prev) / prev) * 100:.1f}%"
 
 @lru_cache(maxsize=2048)
 def period_to_month_end_ts(p: pd.Period) -> pd.Timestamp:
-    # end-of-month timestamp for filtering
     return (p.to_timestamp(how="end")).normalize() + pd.offsets.MonthEnd(0)
 
 def get_metric_value(df: Optional[pd.DataFrame], metric_name, col_name="Metric", value_col="Count") -> int:
@@ -236,7 +342,6 @@ def load_raw(file_path: str, mtime_key_minute: int, cache_version: str) -> Optio
     if missing:
         st.warning("Missing sheets in workbook: " + ", ".join(missing))
 
-    # Standardize columns + add dt cols once
     if is_valid_df(data.get("Monthly_Enroll")):
         df = data["Monthly_Enroll"]
         df.rename(columns={"Number of enrollments": "Enrollments"}, inplace=True)
@@ -271,7 +376,6 @@ def load_raw(file_path: str, mtime_key_minute: int, cache_version: str) -> Optio
         if "Avg Completion %" in df.columns:
             df["Avg Completion %"] = to_num_series(df["Avg Completion %"], 0.0)
 
-    # Month periods: break early when found
     month_periods: List[pd.Period] = []
     for key, col in [
         ("Monthly_Unique", "Month_dt"),
@@ -286,7 +390,6 @@ def load_raw(file_path: str, mtime_key_minute: int, cache_version: str) -> Optio
                 month_periods = s.dt.to_period("M").sort_values().unique().tolist()
                 break
 
-    # KPIs (cheap)
     total_enrolls = 0
     if is_valid_df(data.get("Course")) and "Sign Ups" in data["Course"].columns:
         total_enrolls = to_int_safe(to_num_series(data["Course"]["Sign Ups"], 0).sum(), 0)
@@ -368,12 +471,6 @@ def compute_course_perf(df_course: pd.DataFrame, df_completion: pd.DataFrame, ca
 
 @st.cache_data(show_spinner=False, ttl=CACHE_TTL_SECONDS)
 def compute_funnel(df_split: pd.DataFrame, stage_order: Tuple[str, ...], cache_version: str) -> Tuple[Optional[pd.DataFrame], Optional[str], Optional[pd.DataFrame]]:
-    """
-    Returns:
-      - funnel df with pct and labels
-      - warning (if stage order mismatch)
-      - stage-to-stage drop table (diagnostic)
-    """
     if not is_valid_df(df_split) or not has_cols(df_split, ["Stage", "All Count"]):
         return None, None, None
 
@@ -404,7 +501,6 @@ def compute_funnel(df_split: pd.DataFrame, stage_order: Tuple[str, ...], cache_v
     pct_str = df_f["pct_of_base"].map(lambda v: f"{v:g}")
     df_f["text_label"] = counts_str + " (" + pct_str + "%)"
 
-    # Stage-to-stage drop diagnostic
     drops = []
     for i in range(1, len(df_f)):
         prev_stage = str(df_f.iloc[i - 1]["Stage"])
@@ -413,14 +509,9 @@ def compute_funnel(df_split: pd.DataFrame, stage_order: Tuple[str, ...], cache_v
         curr_val = float(df_f.iloc[i]["All Count"])
         drop_abs = prev_val - curr_val
         drop_pct = (drop_abs / prev_val * 100) if prev_val > 0 else 0.0
-        drops.append(
-            {
-                "From → To": f"{prev_stage} → {curr_stage}",
-                "Drop (users)": int(round(drop_abs)),
-                "Drop (%)": round(drop_pct, 1),
-            }
-        )
+        drops.append({"From → To": f"{prev_stage} → {curr_stage}", "Drop (users)": int(round(drop_abs)), "Drop (%)": round(drop_pct, 1)})
     df_drop = pd.DataFrame(drops) if drops else None
+
     return df_f, warning, df_drop
 
 
@@ -444,25 +535,23 @@ def create_line_compare_chart(
     compare_on: bool,
 ) -> go.Figure:
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df_cur[x_col], y=df_cur[y_col], mode="lines+markers", name=name,
-                             line=dict(color=color, width=3)))
+    fig.add_trace(go.Scatter(x=df_cur[x_col], y=df_cur[y_col], mode="lines+markers", name=name, line=dict(color=color, width=3)))
     if compare_on and df_prev is not None and is_valid_df(df_prev):
         fig.add_trace(go.Scatter(x=df_prev[x_col], y=df_prev[y_col], mode="lines", name="Previous period",
                                  line=dict(color=color, width=2, dash="dash"), opacity=0.7))
-    fig.update_layout(**DARK_LAYOUT, height=height, xaxis=dict(fixedrange=False), dragmode="pan",
-                      legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0))
+    fig.update_layout(
+        **DARK_LAYOUT,
+        height=height,
+        xaxis=dict(fixedrange=False),
+        dragmode="pan",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    )
     return fig
 
 def create_sparkline(df: pd.DataFrame, x_col: str, y_col: str, color: str) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df[x_col], y=df[y_col], mode="lines", line=dict(color=color, width=2)))
-    fig.update_layout(
-        **DARK_LAYOUT,
-        height=90,
-        margin=dict(l=0, r=0, t=0, b=0),
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False),
-    )
+    fig.update_layout(**DARK_LAYOUT, height=90, margin=dict(l=0, r=0, t=0, b=0), xaxis=dict(visible=False), yaxis=dict(visible=False))
     return fig
 
 def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, color: str, text_col: Optional[str], height: int, x_title: Optional[str] = None) -> go.Figure:
@@ -482,10 +571,6 @@ def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, color: str, text_
 # 9) COMPARE MODE HELPERS
 # =========================
 def previous_period_window(periods: List[pd.Period], start_p: pd.Period, end_p: pd.Period) -> Tuple[Optional[pd.Period], Optional[pd.Period]]:
-    """
-    Same-length window immediately preceding the selected window.
-    Returns (prev_start, prev_end) or (None, None) if not enough history.
-    """
     try:
         i0 = periods.index(start_p)
         i1 = periods.index(end_p)
@@ -507,14 +592,11 @@ def previous_period_window(periods: List[pd.Period], start_p: pd.Period, end_p: 
 if not check_password():
     st.stop()
 
-# Sidebar: global controls, saved views, and "progressive disclosure" knobs
 with st.sidebar:
     st.markdown("### Dashboard Controls")
 
-    # Presets
     preset = st.selectbox("Saved views", list(PRESETS.keys()), index=0)
 
-    # Apply presets into session state (once per preset selection)
     if "preset_applied" not in st.session_state or st.session_state.get("preset_applied") != preset:
         cfg = PRESETS[preset]
         st.session_state["months_back"] = cfg["months_back"]
@@ -524,11 +606,14 @@ with st.sidebar:
         st.session_state["top_courses"] = cfg["top_courses"]
         st.session_state["preset_applied"] = preset
 
-    # Global filters
     months_back = st.slider("Default range (months)", 3, 24, int(st.session_state.get("months_back", 12)), 1)
     st.session_state["months_back"] = months_back
 
-    segment = st.selectbox("Segment", ["All", "Business", "Generic", "Invalid"], index=["All", "Business", "Generic", "Invalid"].index(st.session_state.get("segment", "All")))
+    segment = st.selectbox(
+        "Segment",
+        ["All", "Business", "Generic", "Invalid"],
+        index=["All", "Business", "Generic", "Invalid"].index(st.session_state.get("segment", "All")),
+    )
     st.session_state["segment"] = segment
 
     compare_mode = st.toggle("Compare mode (previous period)", value=bool(st.session_state.get("compare_mode", False)))
@@ -542,11 +627,9 @@ with st.sidebar:
 
     chart_height = st.slider("Chart height", 280, 520, 380, 10)
 
-    # Global search
     course_search = st.text_input("Course search (global)", value=st.session_state.get("course_search", ""), placeholder="Filter course tables…")
     st.session_state["course_search"] = course_search
 
-    # Refresh cache (scoped)
     if st.button("Refresh dashboard cache"):
         load_raw.clear()
         compute_geo_top.clear()
@@ -563,17 +646,17 @@ if not bundle:
 
 data = bundle.data
 
-# Header
 st.title("ManageEngine User Academy Dashboard")
-st.markdown(f"<div class='small-muted'>Data updated: <b>{bundle.updated_str}</b> • Preset: <b>{preset}</b> • Segment: <b>{segment}</b></div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div class='small-muted'>Data updated: <b>{bundle.updated_str}</b> • Preset: <b>{preset}</b> • Segment: <b>{segment}</b></div>",
+    unsafe_allow_html=True,
+)
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-# Tabs (10 changes implemented across these)
 tab_exec, tab_growth, tab_geo, tab_courses, tab_users = st.tabs(
     ["Executive Summary", "Growth & Retention", "Geography", "Course Performance", "User Insights"]
 )
 
-# Global date selection (Period slider): consistent and shared
 all_periods = bundle.month_periods
 if not all_periods:
     st.warning("No month/cohort data found to build time filters.")
@@ -582,7 +665,6 @@ if not all_periods:
 default_end = all_periods[-1]
 default_start = all_periods[max(0, len(all_periods) - int(months_back))]
 
-# Persist selected range across tabs
 if "selected_range" not in st.session_state:
     st.session_state["selected_range"] = (default_start, default_end)
 
@@ -605,18 +687,15 @@ prev_start_p, prev_end_p = previous_period_window(all_periods, start_p, end_p) i
 prev_start_dt = period_to_month_end_ts(prev_start_p) if prev_start_p else None
 prev_end_dt = period_to_month_end_ts(prev_end_p) if prev_end_p else None
 
+
 # =========================
-# 11) EXEC SUMMARY (Change #1 + #4 + #10)
+# EXEC SUMMARY
 # =========================
 with tab_exec:
     st.markdown("<div class='section-title'>Executive Summary</div>", unsafe_allow_html=True)
-    info_expander("How to read this", "This tab is optimized for quick decisions: KPI movement + sparklines + the three most important insights.")
+    info_expander("How to read this", "KPI movement + sparklines + key insights for quick decisions.")
     info_expander("Compare mode", TOOLTIPS["compare"])
 
-    # KPI snapshots + (optional) deltas vs previous period (computed from monthly frames when possible)
-    kpi_cols = st.columns(4)
-
-    # Helper to compute period sums from a monthly frame
     def sum_in_window(df: Optional[pd.DataFrame], dt_col: str, val_col: str, s_dt: pd.Timestamp, e_dt: pd.Timestamp) -> float:
         if not is_valid_df(df) or dt_col not in df.columns or val_col not in df.columns:
             return 0.0
@@ -625,14 +704,6 @@ with tab_exec:
             return 0.0
         return float(to_num_series(dfw[val_col], 0).sum())
 
-    # Current/previous sums for a few KPI-style signals (if available)
-    cur_enroll_sum = sum_in_window(data.get("Monthly_Enroll"), "Month_dt", "Enrollments", start_dt, end_dt)
-    prev_enroll_sum = sum_in_window(data.get("Monthly_Enroll"), "Month_dt", "Enrollments", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
-
-    cur_signup_sum = sum_in_window(data.get("Monthly_Unique"), "Month_dt", "Unique User Signups", start_dt, end_dt)
-    prev_signup_sum = sum_in_window(data.get("Monthly_Unique"), "Month_dt", "Unique User Signups", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
-
-    # MAU "latest in window"
     def last_in_window(df: Optional[pd.DataFrame], dt_col: str, val_col: str, s_dt: pd.Timestamp, e_dt: pd.Timestamp) -> float:
         if not is_valid_df(df) or dt_col not in df.columns or val_col not in df.columns:
             return 0.0
@@ -641,16 +712,21 @@ with tab_exec:
             return 0.0
         return float(to_num_series(dfw[val_col], 0).iloc[-1])
 
+    cur_enroll_sum = sum_in_window(data.get("Monthly_Enroll"), "Month_dt", "Enrollments", start_dt, end_dt)
+    prev_enroll_sum = sum_in_window(data.get("Monthly_Enroll"), "Month_dt", "Enrollments", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
+
+    cur_signup_sum = sum_in_window(data.get("Monthly_Unique"), "Month_dt", "Unique User Signups", start_dt, end_dt)
+    prev_signup_sum = sum_in_window(data.get("Monthly_Unique"), "Month_dt", "Unique User Signups", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
+
     mau_col = "Business MAU" if (segment == "Business" and is_valid_df(data.get("MAU")) and "Business MAU" in data["MAU"].columns) else "MAU"
     cur_mau_last = last_in_window(data.get("MAU"), "Month_dt", mau_col, start_dt, end_dt)
     prev_mau_last = last_in_window(data.get("MAU"), "Month_dt", mau_col, prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
 
-    # Activation "latest in window"
     act_col = "Business Activation Rate %" if (segment == "Business" and is_valid_df(data.get("Activation")) and "Business Activation Rate %" in data["Activation"].columns) else "All Activation Rate %"
     cur_act_last = last_in_window(data.get("Activation"), "Cohort_dt", act_col, start_dt, end_dt)
     prev_act_last = last_in_window(data.get("Activation"), "Cohort_dt", act_col, prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else 0.0
 
-    # KPI Cards
+    kpi_cols = st.columns(4)
     with kpi_cols[0]:
         st.metric("Enrollments (in range)", f"{int(round(cur_enroll_sum)):,}", delta=(percent_delta(cur_enroll_sum, prev_enroll_sum) if compare_mode and prev_enroll_sum else None))
     with kpi_cols[1]:
@@ -660,12 +736,7 @@ with tab_exec:
     with kpi_cols[3]:
         st.metric(f"{act_col} (latest)", f"{cur_act_last:.1f}%", delta=(f"{(cur_act_last - prev_act_last):+.1f} pts" if compare_mode and prev_act_last else None))
 
-    # Sparklines row (Change #1)
     spark_cols = st.columns(4)
-    df_e = data.get("Monthly_Enroll")
-    df_s = data.get("Monthly_Unique")
-    df_m = data.get("MAU")
-    df_a = data.get("Activation")
 
     def spark_from(df: Optional[pd.DataFrame], dt_col: str, x_label_col: str, val_col: str, color: str):
         if not is_valid_df(df) or dt_col not in df.columns or x_label_col not in df.columns or val_col not in df.columns:
@@ -673,57 +744,48 @@ with tab_exec:
         d = filter_range(df, dt_col, start_dt, end_dt)
         if not is_valid_df(d):
             return None
-        # Use label col for x (Month/Cohort) for consistent ticks, but hide axes anyway.
         return create_sparkline(d, x_label_col, val_col, color)
 
     with spark_cols[0]:
-        fig = spark_from(df_e, "Month_dt", "Month", "Enrollments", ACCENT)
+        fig = spark_from(data.get("Monthly_Enroll"), "Month_dt", "Month", "Enrollments", ACCENT)
         if fig: st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     with spark_cols[1]:
-        fig = spark_from(df_s, "Month_dt", "Month", "Unique User Signups", BLUE)
+        fig = spark_from(data.get("Monthly_Unique"), "Month_dt", "Month", "Unique User Signups", BLUE)
         if fig: st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     with spark_cols[2]:
-        fig = spark_from(df_m, "Month_dt", "Month", mau_col, LILAC)
+        fig = spark_from(data.get("MAU"), "Month_dt", "Month", mau_col, LILAC)
         if fig: st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
     with spark_cols[3]:
-        fig = spark_from(df_a, "Cohort_dt", "Cohort", act_col, SOFT_GRAY)
+        fig = spark_from(data.get("Activation"), "Cohort_dt", "Cohort", act_col, SOFT_GRAY)
         if fig: st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Key Insights row (Change #10)
     st.markdown("<div class='section-title'>Key Insights</div>", unsafe_allow_html=True)
 
-    # Insight computations
-    # Growth driver: top course by sign-ups (overall), and top country by signups (cumulative)
     top_course_df = compute_course_top(data.get("Course"), 1, CACHE_VERSION) if is_valid_df(data.get("Course")) else None
     top_geo_df = compute_geo_top(data.get("Country"), 1, CACHE_VERSION) if is_valid_df(data.get("Country")) else None
 
     growth_driver = "—"
     if is_valid_df(top_course_df):
         growth_driver = f"Top course: **{top_course_df.iloc[0]['Course']}** ({int(top_course_df.iloc[0]['Sign Ups']):,} sign-ups)"
-    elif is_valid_df(data.get("Course")):
-        growth_driver = "Top course: (course sheet present, but schema mismatch)"
 
     geo_driver = "—"
     if is_valid_df(top_geo_df):
         geo_driver = f"Top country: **{top_geo_df.iloc[0]['Country']}** ({int(top_geo_df.iloc[0]['Total Course Signups']):,} sign-ups)"
 
-    # Risk: biggest stage-to-stage drop in funnel
     funnel_df, funnel_warn, funnel_drops = compute_funnel(data.get("DropOff_Split"), tuple(FUNNEL_STAGE_ORDER), CACHE_VERSION) if is_valid_df(data.get("DropOff_Split")) else (None, None, None)
     risk = "—"
     if is_valid_df(funnel_drops):
         worst = funnel_drops.sort_values("Drop (%)", ascending=False).iloc[0]
         risk = f"Biggest drop: **{worst['From → To']}** (−{int(worst['Drop (users)']):,}, {float(worst['Drop (%)']):.1f}%)"
 
-    # Opportunity: high signups, low completion
     perf = compute_course_perf(data.get("Course"), data.get("Completion"), CACHE_VERSION) if (is_valid_df(data.get("Course")) and is_valid_df(data.get("Completion"))) else None
     opportunity = "—"
     if is_valid_df(perf) and has_cols(perf, ["Course", "Sign Ups", "Avg Completion %"]):
         perf2 = perf.copy()
         perf2["Sign Ups"] = to_num_series(perf2["Sign Ups"], 0)
         perf2["Avg Completion %"] = to_num_series(perf2["Avg Completion %"], 0.0)
-        # pick from top 20% signups but bottom completion
         cutoff = perf2["Sign Ups"].quantile(0.80) if len(perf2) >= 10 else perf2["Sign Ups"].median()
         high = perf2[perf2["Sign Ups"] >= cutoff]
         if not high.empty:
@@ -746,7 +808,6 @@ with tab_exec:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # What changed (Change #4)
     st.markdown("<div class='section-title'>What changed?</div>", unsafe_allow_html=True)
     bullets = []
     if compare_mode and prev_start_dt and prev_end_dt:
@@ -762,14 +823,13 @@ with tab_exec:
 
 
 # =========================
-# 12) GROWTH & RETENTION (Change #2 + #3 + #7 + #6)
+# GROWTH & RETENTION
 # =========================
 with tab_growth:
     st.markdown("<div class='section-title'>Growth & Retention</div>", unsafe_allow_html=True)
-    info_expander("What this means", "Use this tab to understand volume + activation. Compare mode overlays the prior period so you can see if growth is accelerating or decelerating.")
+    info_expander("What this means", "Use this tab to understand volume + activation. Compare mode overlays the prior period.")
     st.caption(f"Range: {start_p.strftime('%b %Y')} → {end_p.strftime('%b %Y')}" + (f" | Compare: {prev_start_p.strftime('%b %Y')} → {prev_end_p.strftime('%b %Y')}" if compare_mode and prev_start_p else ""))
 
-    # Enrollment + table (Change #3)
     st.markdown("#### Enrollment trends")
     info_expander("Definition", TOOLTIPS["enrollment_trend"])
     col1, col2 = st.columns([2, 1])
@@ -796,7 +856,6 @@ with tab_growth:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Signups + table
     st.markdown("#### Signup trends")
     info_expander("Definition", TOOLTIPS["signup_trend"])
     col1, col2 = st.columns([2, 1])
@@ -823,7 +882,6 @@ with tab_growth:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # MAU + Activation, with segment-aware series (Change #2)
     st.markdown("#### Engagement and activation")
     colA, colB = st.columns(2)
 
@@ -832,12 +890,12 @@ with tab_growth:
         info_expander("Definition", TOOLTIPS["mau"])
         df_m = data.get("MAU")
         if is_valid_df(df_m) and "Month_dt" in df_m.columns and "Month" in df_m.columns:
-            mau_col = "Business MAU" if (segment == "Business" and "Business MAU" in df_m.columns) else "MAU"
-            if mau_col in df_m.columns:
+            mau_series_col = "Business MAU" if (segment == "Business" and "Business MAU" in df_m.columns) else "MAU"
+            if mau_series_col in df_m.columns:
                 cur = filter_range(df_m, "Month_dt", start_dt, end_dt)
                 prev = filter_range(df_m, "Month_dt", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else None
                 if is_valid_df(cur):
-                    fig = create_line_compare_chart(cur, "Month", mau_col, prev, mau_col, LILAC, chart_height, compare_mode)
+                    fig = create_line_compare_chart(cur, "Month", mau_series_col, prev, mau_series_col, LILAC, chart_height, compare_mode)
                     st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
                 else:
                     st.info("No MAU data in selected range.")
@@ -851,12 +909,12 @@ with tab_growth:
         info_expander("Definition", TOOLTIPS["activation"])
         df_a = data.get("Activation")
         if is_valid_df(df_a) and "Cohort_dt" in df_a.columns and "Cohort" in df_a.columns:
-            act_col = "Business Activation Rate %" if (segment == "Business" and "Business Activation Rate %" in df_a.columns) else "All Activation Rate %"
-            if act_col in df_a.columns:
+            act_series_col = "Business Activation Rate %" if (segment == "Business" and "Business Activation Rate %" in df_a.columns) else "All Activation Rate %"
+            if act_series_col in df_a.columns:
                 cur = filter_range(df_a, "Cohort_dt", start_dt, end_dt)
                 prev = filter_range(df_a, "Cohort_dt", prev_start_dt, prev_end_dt) if (compare_mode and prev_start_dt and prev_end_dt) else None
                 if is_valid_df(cur):
-                    fig = create_line_compare_chart(cur, "Cohort", act_col, prev, act_col, SOFT_GRAY, chart_height, compare_mode)
+                    fig = create_line_compare_chart(cur, "Cohort", act_series_col, prev, act_series_col, SOFT_GRAY, chart_height, compare_mode)
                     st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
                 else:
                     st.info("No activation data in selected range.")
@@ -867,7 +925,7 @@ with tab_growth:
 
 
 # =========================
-# 13) GEOGRAPHY (Change #3 + #8)
+# GEOGRAPHY
 # =========================
 with tab_geo:
     st.markdown("<div class='section-title'>Geography</div>", unsafe_allow_html=True)
@@ -902,11 +960,11 @@ with tab_geo:
 
 
 # =========================
-# 14) COURSE PERFORMANCE (Change #3 + #5 + #8 + #9)
+# COURSE PERFORMANCE
 # =========================
 with tab_courses:
     st.markdown("<div class='section-title'>Course Performance</div>", unsafe_allow_html=True)
-    info_expander("Definition", "This tab is built for action: find high-impact courses, see completion, and diagnose drop-offs.")
+    info_expander("Definition", "Find high-impact courses, completion rate gaps, and diagnose drop-offs.")
     info_expander("Popular courses", TOOLTIPS["popular"])
     info_expander("Completion rates", TOOLTIPS["completion"])
 
@@ -914,7 +972,6 @@ with tab_courses:
     df_comp = data.get("Completion")
     perf = compute_course_perf(df_course, df_comp, CACHE_VERSION) if (is_valid_df(df_course) and is_valid_df(df_comp)) else None
 
-    # Popular + Completion: 1 chart + 1 table each (Change #3)
     colA, colB = st.columns(2)
 
     with colA:
@@ -942,12 +999,12 @@ with tab_courses:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Funnel + diagnostic table (Change #5)
     st.markdown("#### Drop-off funnel (diagnostic)")
     info_expander("Definition", TOOLTIPS["funnel"])
     colF, colT = st.columns([2, 1])
 
     funnel_df, funnel_warn, funnel_drops = compute_funnel(data.get("DropOff_Split"), tuple(FUNNEL_STAGE_ORDER), CACHE_VERSION) if is_valid_df(data.get("DropOff_Split")) else (None, None, None)
+
     with colF:
         if funnel_warn:
             st.warning(funnel_warn)
@@ -976,7 +1033,6 @@ with tab_courses:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Progressive disclosure for heavy tables (Change #8) + pagination (Change #6)
     st.markdown("#### All course performance")
     if is_valid_df(perf):
         df_table = perf.copy()
@@ -987,7 +1043,6 @@ with tab_courses:
         if "Sign Ups" in df_table.columns:
             df_table = df_table.sort_values("Sign Ups", ascending=False)
 
-        # show top 20 by default
         st.markdown("**Top 20 (quick view)**")
         st.dataframe(df_table.head(20), use_container_width=True, hide_index=True)
 
@@ -1005,7 +1060,6 @@ with tab_courses:
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Keep detailed course drop-off sheet behind expander (Change #8)
     st.markdown("#### Course drop-off sheet (raw)")
     df_cd = data.get("Course_DropOff")
     with st.expander("Show raw course drop-off data", expanded=False):
@@ -1016,11 +1070,11 @@ with tab_courses:
 
 
 # =========================
-# 15) USER INSIGHTS (Change #2 + #3 + #4)
+# USER INSIGHTS
 # =========================
 with tab_users:
     st.markdown("<div class='section-title'>User Insights</div>", unsafe_allow_html=True)
-    info_expander("What this means", "Use this tab to understand composition (segmentation) and depth of engagement.")
+    info_expander("What this means", "Understand composition (segmentation) and depth of engagement.")
 
     colU, colV = st.columns(2)
 
@@ -1035,19 +1089,12 @@ with tab_users:
 
             if biz + gen + inv > 0:
                 fig = go.Figure(
-                    data=[
-                        go.Pie(
-                            labels=["Business", "Generic", "Invalid"],
-                            values=[biz, gen, inv],
-                            hole=0.5,
-                            marker=dict(colors=[ACCENT, SOFT_GRAY, DARK]),
-                        )
-                    ]
+                    data=[go.Pie(labels=["Business", "Generic", "Invalid"], values=[biz, gen, inv], hole=0.5,
+                                 marker=dict(colors=[ACCENT, SOFT_GRAY, DARK]))]
                 )
                 fig.update_layout(**DARK_LAYOUT, height=max(320, chart_height))
                 st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
-                # Insight card (Change #4)
                 total = biz + gen + inv
                 st.caption(f"Business share: {biz/total*100:.1f}% • Generic: {gen/total*100:.1f}% • Invalid: {inv/total*100:.1f}%")
             else:
@@ -1068,7 +1115,6 @@ with tab_users:
                 fig.update_layout(**DARK_LAYOUT, showlegend=False, height=max(320, chart_height))
                 st.plotly_chart(fig, use_container_width=True, config=CHART_CONFIG)
 
-                # Quick narrative (Change #4)
                 top_row = df_plot.sort_values("Count", ascending=False).iloc[0]
                 st.caption(f"Highest concentration: {top_row['Metric']} ({int(top_row['Count']):,} users).")
             else:
@@ -1080,7 +1126,7 @@ with tab_users:
 
     st.markdown("#### Badges")
     df_b = data.get("Badges_Issued")
-    st.caption("This section is informational. If you want this to be actionable, we can add 'issuance velocity' and a claim-rate proxy (if you have those events).")
+    st.caption("If you want this to be actionable, add issuance velocity and claim-rate over time (requires event timestamps).")
     if is_valid_df(df_b):
         st.dataframe(df_b, use_container_width=True, hide_index=True)
     else:
