@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 # =========================
 # 0) CACHE / VERSIONING
 # =========================
-CACHE_VERSION = "2026-01-05.dashboard.v5-iconsfix"
+CACHE_VERSION = "2026-01-05.dashboard.v6-final-fixes"
 CACHE_TTL_SECONDS = 3600  # 1 hour
 
 
@@ -22,10 +22,10 @@ CACHE_TTL_SECONDS = 3600  # 1 hour
 # =========================
 st.set_page_config(page_title="ManageEngine User Academy Dashboard", layout="wide")
 
-# IMPORTANT:
-# - Do NOT force Inter onto every element (that breaks Material Icons in Streamlit -> shows "keyboard_double_arrow_right")
-# - Apply Inter to normal text elements only
-# - Explicitly restore Material Icons font for icon nodes
+# CSS FIX EXPLANATION:
+# 1. We removed the rule that applied 'Inter' to 'html, body, .stApp'. This prevents font bleeding into icons.
+# 2. We now strictly apply 'Inter' only to headers, paragraphs, metrics, and markdown containers.
+# 3. We forced the "Material Icons" font family on the expander toggle specifically, just in case.
 st.markdown(
     """
 <style>
@@ -33,22 +33,24 @@ st.markdown(
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-/* 1. Set the default font for the whole page (Gentle, no !important) */
-html, body, .stApp {
-    font-family: 'Inter', sans-serif;
-}
-
-/* 2. Force Inter ONLY on specific text elements where we are sure icons don't live */
-h1, h2, h3, h4, h5, h6, p, li, a, input, label, textarea {
+/* --- 1. TARGETED FONT APPLICATION (Safe Mode) --- */
+/* Only apply Inter to actual text elements. Leave everything else (icons) alone. */
+h1, h2, h3, h4, h5, h6, p, li, a, input, label, textarea,
+.stMarkdown, .stMetricLabel, .stDataFrame, [data-testid="stMetricValue"] {
     font-family: 'Inter', sans-serif !important;
 }
 
-/* 3. Explicitly PROTECT the icon classes Streamlit uses */
-.material-icons-outlined, .material-icons, .material-symbols-rounded, .material-symbols-outlined {
-    font-family: 'Material Icons' !important;
+/* --- 2. ICON PROTECTION --- */
+/* Force the arrow in the expander to use the icon font */
+[data-testid="stExpanderToggleIcon"] {
+    font-family: "Material Icons" !important;
+}
+/* Catch-all for other material icons */
+.material-icons, .material-icons-rounded, .material-icons-outlined {
+    font-family: "Material Icons" !important;
 }
 
-/* App shell */
+/* --- 3. DASHBOARD STYLING --- */
 .stApp {
     background: radial-gradient(circle at 50% 50%, rgba(16,16,24,1), #000);
     background-attachment: fixed;
@@ -526,9 +528,24 @@ def create_line_compare_chart(
     return fig
 
 def create_sparkline(df: pd.DataFrame, x_col: str, y_col: str, color: str) -> go.Figure:
+    """
+    Revised sparkline: Taller (130px) and filled area to make it more visible.
+    """
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df[x_col], y=df[y_col], mode="lines", line=dict(color=color, width=2)))
-    fig.update_layout(**DARK_LAYOUT, height=90, margin=dict(l=0, r=0, t=0, b=0), xaxis=dict(visible=False), yaxis=dict(visible=False))
+    fig.add_trace(go.Scatter(
+        x=df[x_col],
+        y=df[y_col],
+        mode="lines",
+        fill='tozeroy',  # Area fill
+        line=dict(color=color, width=2)
+    ))
+    fig.update_layout(
+        **DARK_LAYOUT,
+        height=130,  # BUMPED UP from 90
+        margin=dict(l=0, r=0, t=10, b=0),
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+    )
     return fig
 
 def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, color: str, text_col: Optional[str], height: int, x_title: Optional[str] = None) -> go.Figure:
