@@ -33,64 +33,41 @@ st.markdown(
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-/* ✅ Apply Inter to text-y elements without clobbering icon fonts */
-.stApp,
-.stApp p,
-.stApp div,
-.stApp span:not(.material-icons):not([class*="material-icons"]),
-.stApp label,
-.stApp input,
-.stApp textarea,
-.stApp button,
-.stApp h1,
-.stApp h2,
-.stApp h3,
-.stApp h4,
-.stApp h5,
-.stApp h6 {
-  font-family:'Inter', sans-serif !important;
+/* 1. Set the default font for the whole page (Gentle, no !important) */
+html, body, .stApp {
+    font-family: 'Inter', sans-serif;
 }
 
-/* ✅ Restore Streamlit / Material Icons (fixes icon names rendering as text) */
-.material-icons,
-span.material-icons,
-i.material-icons,
-[data-baseweb="icon"] *,
-[data-testid="stExpanderToggleIcon"] *,
-[data-testid="stIconMaterial"] * {
-  font-family: "Material Icons" !important;
-  font-weight: normal !important;
-  font-style: normal !important;
-  letter-spacing: normal !important;
-  text-transform: none !important;
-  display: inline-block !important;
-  white-space: nowrap !important;
-  word-wrap: normal !important;
-  direction: ltr !important;
-  -webkit-font-feature-settings: "liga" !important;
-  -webkit-font-smoothing: antialiased !important;
+/* 2. Force Inter ONLY on specific text elements where we are sure icons don't live */
+h1, h2, h3, h4, h5, h6, p, li, a, input, label, textarea {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* 3. Explicitly PROTECT the icon classes Streamlit uses */
+.material-icons-outlined, .material-icons, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Icons' !important;
 }
 
 /* App shell */
 .stApp {
-  background: radial-gradient(circle at 50% 50%, rgba(16,16,24,1), #000);
-  background-attachment: fixed;
-  color: var(--text-primary);
+    background: radial-gradient(circle at 50% 50%, rgba(16,16,24,1), #000);
+    background-attachment: fixed;
+    color: var(--text-primary);
 }
 
 .main .block-container {
-  padding: 1.6rem 2.2rem !important;
-  max-width: 1650px !important;
+    padding: 1.6rem 2.2rem !important;
+    max-width: 1650px !important;
 }
 
 /* Titles */
 h1 {
-  background: linear-gradient(135deg,#FFF 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900 !important;
-  font-size: 2.3rem !important;
-  margin-bottom: 0.2rem !important;
+    background: linear-gradient(135deg,#FFF 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900 !important;
+    font-size: 2.3rem !important;
+    margin-bottom: 0.2rem !important;
 }
 h2,h3 { color: var(--text-primary) !important; }
 
@@ -100,58 +77,58 @@ h2,h3 { color: var(--text-primary) !important; }
 
 /* Tabs */
 .stTabs [data-baseweb="tab-list"] {
-  display:flex; width:100%; gap:8px;
-  background: rgba(255,255,255,0.03);
-  padding: 8px;
-  border-radius: 14px;
+    display:flex; width:100%; gap:8px;
+    background: rgba(255,255,255,0.03);
+    padding: 8px;
+    border-radius: 14px;
 }
 .stTabs [data-baseweb="tab"] {
-  flex-grow:1; justify-content:center;
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: 700;
-  border-radius: 10px;
-  border: none;
+    flex-grow:1; justify-content:center;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
 }
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 4px 12px rgba(255,102,0,0.28);
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(255,102,0,0.28);
 }
 
 /* Plot cards */
 div[data-testid="stPlotlyChart"] {
-  background: rgba(20,20,30,0.42);
-  border-radius: 16px;
-  padding: 0.75rem;
-  border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(20,20,30,0.42);
+    border-radius: 16px;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 /* Metrics */
 div[data-testid="metric-container"] {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 14px;
-  padding: 0.9rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 0.9rem;
 }
 div[data-testid="stMetricValue"] { color: var(--accent) !important; }
 
 /* Alerts */
 .stAlert {
-  background: rgba(30,41,59,0.75);
-  border: 1px solid rgba(255,255,255,0.10);
-  color:#E2E8F0;
-  font-size: 0.92rem;
+    background: rgba(30,41,59,0.75);
+    border: 1px solid rgba(255,255,255,0.10);
+    color:#E2E8F0;
+    font-size: 0.92rem;
 }
 
-/* Optional: make expanders feel less like input boxes */
+/* Expander styling */
 [data-testid="stExpander"] details {
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.02);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
 }
 [data-testid="stExpander"] summary {
-  cursor: pointer;
+    cursor: pointer;
 }
 </style>
 """,
